@@ -19,7 +19,6 @@ public class BeanBD {
     private Connection con;
     private Statement instruc;
     private ResultSet rs;
-    
     public BeanBD()
     {
         typeBD = "";
