@@ -5,19 +5,51 @@
  */
 package Gui;
 
+import Database.facility.BeanBD;
+import java.sql.*;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+
 /**
  *
  * @author Vince
  */
 public class JDBC extends javax.swing.JFrame {
 
+    BeanBD BD;
     /**
      * Creates new form JDBC
      */
     public JDBC() {
         initComponents();
+        BD = new BeanBD();
+        BD.setTypeBD("mysql");
+        BD.connect();
     }
-
+    
+    public void initializeTable(ResultSetMetaData rsmd) throws SQLException
+    {
+        String [] monVec= {};
+         jTable1.setModel(new javax.swing.table.DefaultTableModel
+                        (
+                                new Object [][] {
+                                },
+                                monVec
+                        ));
+        int nbCol= rsmd.getColumnCount();
+        //System.out.println("nbcol = "+nbCol);
+        DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+        dtm.setRowCount(0);
+        for(int i=1;i<=nbCol;i++)
+        {
+            dtm.addColumn(rsmd.getColumnName(i));
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -27,21 +59,98 @@ public class JDBC extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel1 = new javax.swing.JLabel();
+        jTF_Query = new javax.swing.JTextField();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+        jButton_Execute = new javax.swing.JButton();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        jLabel1.setText("Query :");
+
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jScrollPane1.setViewportView(jTable1);
+
+        jButton_Execute.setText("Execute");
+        jButton_Execute.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton_ExecuteActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTF_Query, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton_Execute)
+                .addContainerGap(38, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(20, 20, 20)
+                .addComponent(jScrollPane1)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(jTF_Query, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton_Execute))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton_ExecuteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_ExecuteActionPerformed
+        try {
+            
+            ResultSet rs = BD.executeQuery(jTF_Query.getText());
+            ResultSetMetaData rsmd = rs.getMetaData();
+            initializeTable(rsmd);
+            DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+            while(rs.next())
+            {
+                Vector vec = new Vector();
+                for(int i=1; i<=rsmd.getColumnCount();i++)
+                {
+                    switch(rsmd.getColumnClassName(i))
+                    {
+                        case "java.lang.Integer":
+                            //System.out.println("Integer "+rsmd.getColumnClassName(i));
+                            int j =  rs.getInt(i);
+                            vec.add(j);
+                            break;
+                        case "java.lang.String":
+                            //System.out.println("String "+rsmd.getColumnClassName(i));
+                            String s =  rs.getString(i);
+                            vec.add(s);
+                            break;
+                    }
+                }
+                dtm.addRow(vec);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(JDBC.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jButton_ExecuteActionPerformed
 
     /**
      * @param args the command line arguments
@@ -79,5 +188,10 @@ public class JDBC extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton_Execute;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTextField jTF_Query;
+    private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }

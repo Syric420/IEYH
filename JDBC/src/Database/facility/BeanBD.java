@@ -15,17 +15,22 @@ import java.util.logging.Logger;
  * @author Vince
  */
 public class BeanBD {
+    private static final Object LOCK = new Object();
     private String typeBD;
     private Connection con;
     private Statement instruc;
     private ResultSet rs;
+
+    
     public BeanBD()
     {
+        
         typeBD = "";
     }
     /**
      * @return the typeBD
      */
+
     public String getTypeBD() {
         return typeBD.toUpperCase();
     }
@@ -78,7 +83,7 @@ public class BeanBD {
             System.out.println("Essai de connexion JDBC");
             ReadProperties rP ;
             try {
-                rP = new ReadProperties("/database/utilities/Config.properties");
+                rP = new ReadProperties("/Database/facility/Config.properties");
                 String s;
                 s = new String(getTypeBD()+"_DRIVER");
                 leDriver = Class.forName(rP.getProp(s));
@@ -104,6 +109,40 @@ public class BeanBD {
                 Logger.getLogger(BeanBD.class.getName()).log(Level.SEVERE, null, ex);
             }
             return 0;
+        }
+    }
+    
+    public ResultSet executeQuery(String req)
+    {
+        
+        synchronized(LOCK)
+        {
+            rs=null;
+            try {
+                rs = instruc.executeQuery(req);
+                
+            } catch (SQLException ex) {
+                Logger.getLogger(BeanBD.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return rs;
+        }
+        
+    }
+    
+    public int selectCount(String req)
+    {
+        
+        synchronized(LOCK){
+            int i=0;
+            try {
+
+                rs = instruc.executeQuery(req);
+                i = rs.getInt(1);
+
+            } catch (SQLException ex) {
+                Logger.getLogger(BeanBD.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return i;
         }
     }
 
