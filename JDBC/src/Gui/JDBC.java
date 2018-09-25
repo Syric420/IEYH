@@ -9,9 +9,14 @@ import Database.facility.BeanBD;
 import java.sql.*;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
@@ -22,6 +27,7 @@ import javax.swing.table.TableModel;
 public class JDBC extends javax.swing.JFrame {
 
     BeanBD BD;
+    boolean edit=false;
     /**
      * Creates new form JDBC
      */
@@ -41,6 +47,7 @@ public class JDBC extends javax.swing.JFrame {
                                 },
                                 monVec
                         ));
+         
         int nbCol= rsmd.getColumnCount();
         //System.out.println("nbcol = "+nbCol);
         DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
@@ -64,10 +71,21 @@ public class JDBC extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
         jButton_Execute = new javax.swing.JButton();
+        jButton_Update = new javax.swing.JButton();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        jMenu1 = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
+        jMenuItem2 = new javax.swing.JMenuItem();
+        jMenuItem3 = new javax.swing.JMenuItem();
+        jMenuItem4 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         jLabel1.setText("Query :");
+
+        jTF_Query.setText("Select * from avion");
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -86,6 +104,55 @@ public class JDBC extends javax.swing.JFrame {
             }
         });
 
+        jButton_Update.setText("Update");
+        jButton_Update.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton_UpdateActionPerformed(evt);
+            }
+        });
+
+        jMenu1.setText("File");
+
+        jMenuItem1.setText("Quitter");
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        jMenu1.add(jMenuItem1);
+
+        jMenuBar1.add(jMenu1);
+
+        jMenu2.setText("Instructions");
+
+        jMenuItem2.setText("Select *");
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem2ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem2);
+
+        jMenuItem3.setText("Select count(*)");
+        jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem3ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem3);
+
+        jMenuItem4.setText("Update");
+        jMenuItem4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem4ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem4);
+
+        jMenuBar1.add(jMenu2);
+
+        setJMenuBar(jMenuBar1);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -97,7 +164,9 @@ public class JDBC extends javax.swing.JFrame {
                 .addComponent(jTF_Query, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButton_Execute)
-                .addContainerGap(38, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton_Update)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addGap(20, 20, 20)
                 .addComponent(jScrollPane1)
@@ -106,13 +175,14 @@ public class JDBC extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(21, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(jTF_Query, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton_Execute))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
+                    .addComponent(jButton_Execute)
+                    .addComponent(jButton_Update))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 273, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -126,11 +196,13 @@ public class JDBC extends javax.swing.JFrame {
             ResultSetMetaData rsmd = rs.getMetaData();
             initializeTable(rsmd);
             DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+            
             while(rs.next())
             {
                 Vector vec = new Vector();
                 for(int i=1; i<=rsmd.getColumnCount();i++)
                 {
+                    System.out.println("Classe = "+rsmd.getColumnClassName(i));
                     switch(rsmd.getColumnClassName(i))
                     {
                         case "java.lang.Integer":
@@ -143,14 +215,58 @@ public class JDBC extends javax.swing.JFrame {
                             String s =  rs.getString(i);
                             vec.add(s);
                             break;
+                        case "java.lang.Long":
+                            //System.out.println("String "+rsmd.getColumnClassName(i));
+                            long l =  rs.getLong(i);
+                            vec.add(l);
+                            break;
+                        case "java.sql.Date":
+                            Date date = rs.getDate(i);
+                            //System.out.println(date);
+                            vec.add(date);
+                            break;
+                        default:
+                            vec.add("NULL");
+                            break;
                     }
                 }
                 dtm.addRow(vec);
             }
         } catch (SQLException ex) {
             Logger.getLogger(JDBC.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, "Erreur avec l'instruction : "+ex.getMessage());
         }
     }//GEN-LAST:event_jButton_ExecuteActionPerformed
+
+    private void jButton_UpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_UpdateActionPerformed
+        try {
+            int ret = BD.executeUpdate(jTF_Query.getText());
+            if(ret>0)
+            {
+                JOptionPane.showMessageDialog(this, "Update réussi");
+            }
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(JDBC.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, "Erreur avec l'instruction : "+ex.getMessage());
+        }
+    }//GEN-LAST:event_jButton_UpdateActionPerformed
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        System.exit(0);
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        jTF_Query.setText("Select * from ");
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+    private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
+        jTF_Query.setText("Select count(*) from ");
+    }//GEN-LAST:event_jMenuItem3ActionPerformed
+
+    private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
+        jTF_Query.setText("Update set ='' where = ''");
+    }//GEN-LAST:event_jMenuItem4ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -189,7 +305,15 @@ public class JDBC extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton_Execute;
+    private javax.swing.JButton jButton_Update;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JMenuItem jMenuItem3;
+    private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField jTF_Query;
     private javax.swing.JTable jTable1;

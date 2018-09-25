@@ -103,45 +103,50 @@ public class BeanBD {
             catch (ClassNotFoundException e)
             { 
                 System.out.println("Driver adéquat non trouvable : " + e.getMessage()); 
+                System.exit(0);
             } catch (IOException ex) {
-                Logger.getLogger(BeanBD.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(BeanBD.class.getName()).log(Level.SEVERE, null, ex);System.exit(0);
             } catch (SQLException ex) {
-                Logger.getLogger(BeanBD.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(BeanBD.class.getName()).log(Level.SEVERE, null, ex);System.exit(0);
             }
             return 0;
         }
     }
     
-    public ResultSet executeQuery(String req)
+    public ResultSet executeQuery(String req) throws SQLException
     {
         
         synchronized(LOCK)
         {
             rs=null;
-            try {
-                rs = instruc.executeQuery(req);
+            rs = instruc.executeQuery(req);
                 
-            } catch (SQLException ex) {
-                Logger.getLogger(BeanBD.class.getName()).log(Level.SEVERE, null, ex);
-            }
             return rs;
         }
         
     }
     
-    public int selectCount(String req)
+    public int executeUpdate(String req) throws SQLException
+    {
+        int ret;
+        synchronized(LOCK)
+        {
+            rs=null;
+            ret = instruc.executeUpdate(req);
+                
+            return ret;
+        }
+        
+    }
+    
+    public int selectCount(String req) throws SQLException
     {
         
         synchronized(LOCK){
             int i=0;
-            try {
+            rs = instruc.executeQuery(req);
+            i = rs.getInt(1);
 
-                rs = instruc.executeQuery(req);
-                i = rs.getInt(1);
-
-            } catch (SQLException ex) {
-                Logger.getLogger(BeanBD.class.getName()).log(Level.SEVERE, null, ex);
-            }
             return i;
         }
     }
