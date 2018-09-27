@@ -16,16 +16,31 @@
 /*
  * 
  */
+//les mutex + variables de conditions
+pthread_mutex_t mutexIndiceCourant;
+pthread_mutex_t mutexFichierTicket;
+pthread_cond_t condIndiceCourant;
+
+int indiceCourant=-1;
 int hSocketEcoute, Port_Service, Port_Admin;
 char sepTrame, finTrame, sepCsv;
 char pwdMaster [50], pwdAdmin[50];
+int hSocketServices[NB_MAX_CLIENTS];
+pthread_t threadHandle[NB_MAX_CLIENTS];
+
+
+
 int main(int argc, char** argv) {
     Config();
-    char * test;
+    int ret;
+    struct sigaction sigact;
+    sigemptyset(&sigact.sa_mask);
+    sigact.sa_handler=HandlerQuit;
+    if (sigaction(SIGINT,&sigact,NULL) == -1)
+        perror("Erreur d'armement du signal SIGQUIT");
     
     
     /* Socket d'ecoute pour l'attente */
-    int hSocketService;
     int i,j, /* variables d'iteration */
     retRecv; /* Code de retour dun recv */
     struct hostent * infosHost; /*Infos sur le host : pour gethostbyname */
@@ -33,29 +48,70 @@ int main(int argc, char** argv) {
     struct sockaddr_in adresseSocket;
     int tailleSockaddr_in;
     char msgClient [MAXSTRING];
+    int hSocketService;
+    
+    /* Si la socket n'est pas utilisee, le descripteur est a -1 */
+    for (i=0; i<NB_MAX_CLIENTS; i++) hSocketServices[i] = -1;
+    
     hSocketEcoute = confSockSrv("localhost", 50001);
     
-    puts("Thread principal : en attente d'une connexion");
-    if (listen(hSocketEcoute,SOMAXCONN) == -1)
+    /* 6. Lancement des threads */
+    for (i=0; i<NB_MAX_CLIENTS; i++)
     {
-      printf("Erreur sur le listen de la socket %d\n", errno);
-      close(hSocketEcoute); /* Fermeture de la socket */
-      exit(1);
+      ret = pthread_create(&threadHandle[i],NULL,fctThread, (void*)i);
+      printf("Thread secondaire %d lance !\n", i);
+      ret = pthread_detach(threadHandle[i]);
     }
-    else printf("Listen socket OK\n");
-    /* 8. Acceptation d'une connexion */
-    tailleSockaddr_in = sizeof(struct sockaddr_in);
-    if ( (hSocketService =
-      accept(hSocketEcoute, (struct sockaddr *)&adresseSocket, &tailleSockaddr_in) )
-      == -1)
+    
+    do
+    {
+      /* 7. Mise a l'ecoute d'une requete de connexion */
+      puts("Thread principal : en attente d'une connexion");
+      if (listen(hSocketEcoute,SOMAXCONN) == -1)
       {
-        printf("Erreur sur l'accept de la socket %d\n", errno);
+        printf("Erreur sur le listen de la socket %d\n", errno);
         close(hSocketEcoute); /* Fermeture de la socket */
         exit(1);
       }
-      else printf("Accept socket OK\n");
+      else printf("Listen socket OK\n");
+      
+      /* 8. Acceptation d'une connexion */
+      tailleSockaddr_in = sizeof(struct sockaddr_in);
+      if ( (hSocketService =
+        accept(hSocketEcoute, (struct sockaddr *)&adresseSocket, &tailleSockaddr_in) )
+        == -1)
+        {
+          printf("Erreur sur l'accept de la socket %d\n", errno);
+          close(hSocketEcoute); /* Fermeture de la socket */
+          exit(1);
+        }
+        else printf("Accept socket OK\n");
+      
+        /* 9. Recherche d'une socket connectee libre */
+        printf("Recherche d'une socket connecteee libre ...\n");
+        for (j=0; j<NB_MAX_CLIENTS && hSocketServices[j] !=-1; j++);
+        if (j == NB_MAX_CLIENTS)
+        {
+          printf("Plus de connexion disponible\n");
+          sprintf(msgClient,DOC);
+          sendSize(hSocketService,msgClient,MAXSTRING);
+          close(hSocketService); /* Fermeture de la socket */
+        }
+        else
+        {
+          /* Il y a une connexion de libre */
+          printf("Connexion sur la socket num. %d\n", j);
+          pthread_mutex_lock(&mutexIndiceCourant);
+          hSocketServices[j] = hSocketService;
+          indiceCourant=j;
+          pthread_mutex_unlock(&mutexIndiceCourant);
+          pthread_cond_signal(&condIndiceCourant);
+        }
+      }while (1);
+    
+    
     //Pour recevoir une trame avec caractère FinTrame
-    /*retRecv = receiveSize(hSocketService, msgClient, MAXSTRING);
+    /*
     retRecv = receiveSep(hSocketService, msgClient, finTrame);
     test = malloc(sizeof(char) * retRecv);
     strcpy(test, msgClient);*/
@@ -66,12 +122,58 @@ int main(int argc, char** argv) {
     retRecv = receiveSize(hSocketService, req, LONG_STRUCT);
     printf("req type = %d\nreq msg = %s", req->type, req->chargeUtile);
     fflush(stdout);*/
-    while(1);
     return (EXIT_SUCCESS);
 }
 
+/* -------------------------------------------------------- */
+void * fctThread (void *param)
+{
+    int vr = (int)(param), finDialogue=0, i, iCliTraite;
+    int hSocketServ;
+    char * numThr = getThreadIdentity(), *buf = (char*)malloc(100);;
+    char msgClient[MAXSTRING];
+    
+    while (1)
+    {
+        /* 1. Attente d'un client à traiter */
+        pthread_mutex_lock(&mutexIndiceCourant);
+        while (indiceCourant == -1)
+            pthread_cond_wait(&condIndiceCourant, &mutexIndiceCourant);
+        iCliTraite = indiceCourant; indiceCourant=-1;
+        hSocketServ = hSocketServices[iCliTraite];
+        pthread_mutex_unlock(&mutexIndiceCourant);
+        sprintf(buf,"Je m'occupe du numero %d ... avec la socket %d", iCliTraite, hSocketServ);affThread(numThr, buf);
+        
+        /* 2. Dialogue thread-client */
+        /*if(receiveSep(hSocketServ, msgClient))
+          printf("\nReceive sep = %s\n", msgClient);*/
+        finDialogue=0;
+        do
+        {
+            if(receiveSep(hSocketServ, msgClient, finTrame)==0)
+            {
+              printf("Erreur sur le recv de la socket connectee : %d\n", errno);
+              exit(0);
+            }
+
+            printf("Requete recue = %s",msgClient);
+            fflush(stdout);
+            if (strcmp(msgClient, EOC)==0)
+            {
+              finDialogue=1; break;
+            }
+        }while (!finDialogue);
+        
+        /* 3. Fin de traitement */
+        pthread_mutex_lock(&mutexIndiceCourant);
+        hSocketServices[iCliTraite]=-1;
+        pthread_mutex_unlock(&mutexIndiceCourant);
+        close (hSocketServ);
+    }
+}
+
 void Config()
-  {
+{
     int temp;
 
     FILE* filedesc = fopen("ServeurConf.conf","r");
@@ -138,4 +240,31 @@ void Config()
       }
     } while(read != -1);
 
-  }
+ }
+
+char * getThreadIdentity()
+{
+    unsigned long numSequence;
+    char *buf = (char *)malloc(30);
+    sprintf(buf, "%d", getpid());
+    return buf;
+} 
+ 
+ void HandlerQuit(int var)
+{
+     int i;
+    printf("Fin du serveur\n");
+    fflush(stdout);
+    pthread_mutex_lock(&mutexIndiceCourant);
+    //Couper toutes les sockets de services
+    for(i=0;i<NB_MAX_CLIENTS;i++)
+    {
+        printf("Coupe la socket numero : %d\n",i);
+        close(hSocketServices[i]);
+        hSocketServices[i]=-1;
+    }
+    pthread_mutex_unlock(&mutexIndiceCourant);
+    close(hSocketEcoute);
+    exit(0);
+}
+  

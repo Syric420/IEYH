@@ -26,9 +26,13 @@ int tailleSockaddr_in;
 int main(int argc, char** argv) {
     int i;
     hSocket = connectToServ("127.0.0.1", 50001);
-    RequeteStump req;
+    char msgClient[MAXSTRING];
+    /*RequeteStump req;
     req.type=LOGIN_OFFICER;
     strcpy(req.chargeUtile, "test");
-    sendSize(hSocket,(void *)&req, LONG_STRUCT);
+    sendSize(hSocket,(void *)&req, LONG_STRUCT);*/
+    strcpy(msgClient, "Coucou");
+    sendSep(hSocket, msgClient, '#');
+    while(1);
 }
 

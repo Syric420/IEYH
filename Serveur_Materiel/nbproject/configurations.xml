@@ -4,6 +4,7 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <itemPath>AccessMaterial.h</itemPath>
       <itemPath>ServeurMateriel.h</itemPath>
       <itemPath>SocketUtilities.h</itemPath>
     </logicalFolder>
@@ -15,6 +16,7 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <itemPath>AccessMaterial.c</itemPath>
       <itemPath>ServeurMateriel.c</itemPath>
       <itemPath>SocketUtilities.c</itemPath>
     </logicalFolder>
@@ -43,6 +45,10 @@
           <commandLine>-pthread</commandLine>
         </cTool>
       </compileType>
+      <item path="AccessMaterial.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="AccessMaterial.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="ServeurConf.conf" ex="false" tool="3" flavor2="0">
       </item>
       <item path="ServeurMateriel.c" ex="false" tool="0" flavor2="0">
@@ -74,6 +80,10 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="AccessMaterial.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="AccessMaterial.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="ServeurConf.conf" ex="false" tool="3" flavor2="0">
       </item>
       <item path="ServeurMateriel.c" ex="false" tool="0" flavor2="0">
