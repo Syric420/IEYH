@@ -32,8 +32,8 @@ reseau */
 #ifndef SOCKETUTILITIES_H
 #define SOCKETUTILITIES_H
 
-int receiveSize(int, char *, int);
-int sendSize(int, char *, int);
+int receiveSize(int, void *, int);
+int sendSize(int, void *, int);
 int confSockSrv(char*,int);
 char marqueurRecu (char *, char);
 int receiveSep(int, char *, char );

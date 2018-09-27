@@ -54,14 +54,18 @@ int main(int argc, char** argv) {
         exit(1);
       }
       else printf("Accept socket OK\n");
-    
-    //retRecv = receiveSize(hSocketService, msgClient, MAXSTRING);
+    //Pour recevoir une trame avec caractère FinTrame
+    /*retRecv = receiveSize(hSocketService, msgClient, MAXSTRING);
     retRecv = receiveSep(hSocketService, msgClient, finTrame);
     test = malloc(sizeof(char) * retRecv);
-    strcpy(test, msgClient);
-    puts(test);
-    fflush(stdout);
+    strcpy(test, msgClient);*/
     
+    
+    //Pour recevoir une structure
+    /*RequeteStump *req = (RequeteStump *)malloc(sizeof(RequeteStump));
+    retRecv = receiveSize(hSocketService, req, LONG_STRUCT);
+    printf("req type = %d\nreq msg = %s", req->type, req->chargeUtile);
+    fflush(stdout);*/
     while(1);
     return (EXIT_SUCCESS);
 }

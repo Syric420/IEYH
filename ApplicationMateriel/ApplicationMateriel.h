@@ -32,11 +32,20 @@ reseau */
 #define DOC "DENY_OF_CONNEXION" /*  dans tcpiter.h */
 #define EOC "END_OF_CONNEXION"
 #define MAXSTRING 5000 /* Longueur des messages */
+#define LONG_STRUCT sizeof(RequeteStump) /* Longeur des messages */
 
 #define LOGIN_OFFICER 1
 #define LOGOUT_OFFICER 2
 #define CHECK_TICKET 3
 #define PAYMENT_DONE 4
+
+
+typedef struct
+{
+  int type;
+  char chargeUtile[500];
+} RequeteStump;
+
 
 /*void Config();
 void Init();

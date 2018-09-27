@@ -14,31 +14,28 @@
 
 
 
-int receiveSize(int socket, char * struc, int size)
+int receiveSize(int socket, void * struc, int size)
 {
-  char *buf = (char*)malloc(100);
-  fflush(stdout);
-  int retRecv;
-  if ((retRecv=recv(socket, struc, size, 0)) == -1)
-  {
-    printf("Erreur sur le recv de la socket %d\n", errno);
-    fflush(stdout);
-    close(socket); /* Fermeture de la socket */
-  }
-  else
-  if (retRecv==0)
-  {
-    sprintf(buf,"Le client est parti !!!\n"); printf("%s", buf);
-    fflush(stdout);
-    return 0;
-  }
-  else
-  {
-    /*sprintf(buf,"Message recu = %s\n", ((char*)struc));
-    printf("%s", buf);*/
-    fflush(stdout);
-    return 1;
-  }
+    int nbreBytesRecus, tailleMsgRecu;
+    tailleMsgRecu=0;
+    do
+    {
+        puts("Passage boucle de reception");
+        if ( (nbreBytesRecus = recv(socket, ((char*)struc) + tailleMsgRecu, size-tailleMsgRecu, 0))== -1) /* pas message urgent */
+        {
+            printf("Erreur sur le recv de la socket %d\n", errno);
+            close(socket); /* Fermeture de la socket */
+            close(socket); /* Fermeture de la socket */
+            exit(1);
+        }
+        else
+        {
+            printf("Taile msg recu = %d et taille attendue = %d\n", tailleMsgRecu, size);
+            tailleMsgRecu += nbreBytesRecus;
+        }
+        printf("Taill msg = %d et nbreBytes = %d \n", tailleMsgRecu, nbreBytesRecus);
+    }while (nbreBytesRecus != 0 && nbreBytesRecus != -1 &&tailleMsgRecu <size );
+    return tailleMsgRecu;
 }
 
 
@@ -59,14 +56,13 @@ int receiveSep(int socket, char * msgClient, char sep)
     }
     else
     {
-        printf("getsockopt OK\n");
-        printf("Taille maximale d'un segment = %d\n", tailleS);
+        //printf("getsockopt OK\n");
+        //printf("Taille maximale d'un segment = %d\n", tailleS);
     }
     
     do
     {
-        puts("Passage boucle de reception");
-        if ( (nbreBytesRecus = recv(socket, buf, MAXSTRING, 0)) == -1)
+        if ( (nbreBytesRecus = recv(socket, buf, tailleS, 0)) == -1)
         {
             printf("Erreur sur le recv de la socket %d\n", errno);
             close(socket); close(socket); exit(1);
@@ -76,9 +72,6 @@ int receiveSep(int socket, char * msgClient, char sep)
             finDetectee = marqueurRecu (buf, sep);
             memcpy((char *)msgClient + tailleMsgRecu, buf,nbreBytesRecus);
             tailleMsgRecu += nbreBytesRecus;
-            printf("finDetecteee = %d\n", finDetectee);
-            printf("Nombre de bytes recus = %d\n", nbreBytesRecus );
-            printf("Taile totale msg recu = %d\n", tailleMsgRecu );
         }
     }while (nbreBytesRecus != 0 && nbreBytesRecus != -1 && finDetectee!=0);
     
@@ -96,7 +89,8 @@ char marqueurRecu (char *m, char sep)
     {
         if(m[i]==sep)
         {
-            printf("# trouveeeeee\n");
+            //printf("# trouveeeeee\n");
+            m[i]='\0';
             return 0;
         }   
     }
@@ -129,16 +123,16 @@ int sendSep(int socket,char * msg, char sep)
     return 0;
 }
 
-int sendSize(int socket,char * buf, int size)
+int sendSize(int socket,void * struc, int size)
 {
 
-  if (send(socket, buf, size, 0) == -1)
+  if (send(socket, (char*) struc, size, 0) == -1)
   {
     printf("Erreur sur le send de la socket %d\n", errno);
     close(socket); /* Fermeture de la socket */
-    return 0;
+    return -1;
   }
-  else return 1;
+  else return 0;
 }
 
 int connectToServ(char * ip, int port )

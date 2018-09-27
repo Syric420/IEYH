@@ -22,15 +22,19 @@
 #define DOC "DENY_OF_CONNEXION"
 #define MAXSTRING 160 /* Longueur des messages */
 #define affThread(num, msg) printf("th_%s> %s\n", num, msg);
+#define LONG_STRUCT sizeof(RequeteStump) /* Longeur des messages */
 
 #define LOGIN_MATERIEL 1
 #define LOGOUT_MATERIEL 2
+#define HMAT_MATERIEL 3
+#define LISTCMD_MATERIEL 4
+#define CHMAT_MATERIEL 5
 
 typedef struct
 {
-  char nomUtilisateur[80];
-  char password[80];
-} userLogin;
+  int type;
+  char chargeUtile[500];
+} RequeteStump;
 
 
 void HandlerQuit(int);
