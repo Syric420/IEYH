@@ -12,19 +12,19 @@
  */
 
 #include "ServeurMateriel.h"
+#include "SocketUtilities.h"
 
 /*
  * 
  */
 //les mutex + variables de conditions
 pthread_mutex_t mutexIndiceCourant;
-pthread_mutex_t mutexFichierTicket;
 pthread_cond_t condIndiceCourant;
 
 int indiceCourant=-1;
 int hSocketEcoute, Port_Service, Port_Admin;
 char sepTrame, finTrame, sepCsv;
-char pwdMaster [50], pwdAdmin[50];
+char pwdMaster [50], pwdAdmin[50],loginCsv[50], barqueCsv[50], pedaloCsv[50];
 int hSocketServices[NB_MAX_CLIENTS];
 pthread_t threadHandle[NB_MAX_CLIENTS];
 
@@ -47,13 +47,13 @@ int main(int argc, char** argv) {
     struct in_addr adresseIP; /* Adresse Internet au format reseau */
     struct sockaddr_in adresseSocket;
     int tailleSockaddr_in;
-    char msgClient [MAXSTRING];
+    char msgServeur[MAXSTRING];
     int hSocketService;
     
     /* Si la socket n'est pas utilisee, le descripteur est a -1 */
     for (i=0; i<NB_MAX_CLIENTS; i++) hSocketServices[i] = -1;
     
-    hSocketEcoute = confSockSrv("localhost", 50001);
+    hSocketEcoute = confSockSrv("localhost", Port_Service);
     
     /* 6. Lancement des threads */
     for (i=0; i<NB_MAX_CLIENTS; i++)
@@ -93,8 +93,8 @@ int main(int argc, char** argv) {
         if (j == NB_MAX_CLIENTS)
         {
           printf("Plus de connexion disponible\n");
-          sprintf(msgClient,DOC);
-          sendSize(hSocketService,msgClient,MAXSTRING);
+          sprintf(msgServeur,DOC);
+          sendSize(hSocketService,msgServeur,MAXSTRING);
           close(hSocketService); /* Fermeture de la socket */
         }
         else
@@ -112,9 +112,10 @@ int main(int argc, char** argv) {
     
     //Pour recevoir une trame avec caractère FinTrame
     /*
-    retRecv = receiveSep(hSocketService, msgClient, finTrame);
+    retRecv = receiveSep(hSocketService, msgServeur, finTrame);
     test = malloc(sizeof(char) * retRecv);
-    strcpy(test, msgClient);*/
+    strcpy(test, msgServeur);*/
+    //sendSep
     
     
     //Pour recevoir une structure
@@ -131,7 +132,7 @@ void * fctThread (void *param)
     int vr = (int)(param), finDialogue=0, i, iCliTraite;
     int hSocketServ;
     char * numThr = getThreadIdentity(), *buf = (char*)malloc(100);;
-    char msgClient[MAXSTRING];
+    char msgServeur[MAXSTRING];
     
     while (1)
     {
@@ -145,23 +146,29 @@ void * fctThread (void *param)
         sprintf(buf,"Je m'occupe du numero %d ... avec la socket %d", iCliTraite, hSocketServ);affThread(numThr, buf);
         
         /* 2. Dialogue thread-client */
-        /*if(receiveSep(hSocketServ, msgClient))
-          printf("\nReceive sep = %s\n", msgClient);*/
+        /*if(receiveSep(hSocketServ, msgServeur))
+          printf("\nReceive sep = %s\n", msgServeur);*/
         finDialogue=0;
         do
         {
-            if(receiveSep(hSocketServ, msgClient, finTrame)==0)
+            if(receiveSep(hSocketServ, msgServeur, finTrame)==0)
             {
               printf("Erreur sur le recv de la socket connectee : %d\n", errno);
               exit(0);
             }
 
-            printf("Requete recue = %s",msgClient);
+            printf("Requete recue = %s",msgServeur);
             fflush(stdout);
-            if (strcmp(msgClient, EOC)==0)
+
+            if (strcmp(msgServeur, EOC)==0)
             {
               finDialogue=1; break;
             }
+            else
+            {
+                traiteRequete(&msgServeur, hSocketServ);
+            }
+            
         }while (!finDialogue);
         
         /* 3. Fin de traitement */
@@ -170,6 +177,41 @@ void * fctThread (void *param)
         pthread_mutex_unlock(&mutexIndiceCourant);
         close (hSocketServ);
     }
+}
+
+void traiteRequete(char * req, int socket)
+{
+    int typeReq;
+    char *chargeUtile = NULL,*str;
+    char msgServeur[MAXSTRING];
+    
+    printf("Req = %s", req);
+    fflush(stdout);
+    //On découpe la chaine pour connaitre le type de requête
+    str=strtok(req,&sepCsv);//recupere avant egal
+    chargeUtile=strtok(NULL,&sepCsv);//recupere apres ";"
+    typeReq=atoi(str);
+    fflush(stdout);
+    printf("\ntypeReq = %d\nMessage = %s\n", typeReq, chargeUtile);
+    fflush(stdout);
+    
+    switch(typeReq)
+    {
+        case 1: //login
+            printf("case 1: login\n");
+            fflush(stdout);
+            int ret = fctLogin(chargeUtile);
+            if(ret == 0)
+                strcpy(msgServeur, "1;OK");
+            else
+                strcpy(msgServeur, "1;NOK");
+            
+            sendSep(socket, msgServeur, finTrame);
+            break;
+    }
+    //--------------------------------------------------------
+    //printf("ReqType: %d\nmessage: %s", &typeReq, Buf);
+    fflush(stdout);
 }
 
 void Config()
@@ -220,6 +262,33 @@ void Config()
             sepCsv = Buf[0];
             printf("sep-csv = %c\n", sepCsv);
         }
+        else if(strcmp(str,"loginCsv") == 0)
+        {
+            strcpy(loginCsv, "");
+            strcpy(loginCsv,Buf);
+            temp = strlen(loginCsv);
+            loginCsv[temp-1]=NULL;//Enlever \0
+            printf("loginCsv = %s\n", loginCsv);
+
+        }
+        else if(strcmp(str,"pedaloCsv") == 0)
+        {
+            strcpy(pedaloCsv, "");
+            strcpy(pedaloCsv,Buf);
+            temp = strlen(pedaloCsv);
+            pedaloCsv[temp-1]=NULL;//Enlever \0
+            printf("pedaloCsv = %s\n", pedaloCsv);
+
+        }
+        else if(strcmp(str,"barqueCsv") == 0)
+        {
+            strcpy(barqueCsv, "");
+            strcpy(barqueCsv,Buf);
+            temp = strlen(barqueCsv);
+            barqueCsv[temp-1]=NULL;//Enlever \0
+            printf("barqueCsv = %s\n", barqueCsv);
+
+        }
         else if(strcmp(str,"pwdMaster") == 0)
         {
           strcpy(pwdMaster, "");
@@ -252,7 +321,7 @@ char * getThreadIdentity()
  
  void HandlerQuit(int var)
 {
-     int i;
+    int i;
     printf("Fin du serveur\n");
     fflush(stdout);
     pthread_mutex_lock(&mutexIndiceCourant);
@@ -260,11 +329,49 @@ char * getThreadIdentity()
     for(i=0;i<NB_MAX_CLIENTS;i++)
     {
         printf("Coupe la socket numero : %d\n",i);
-        close(hSocketServices[i]);
+        if(hSocketServices[i]!=-1)
+            close(hSocketServices[i]);
         hSocketServices[i]=-1;
     }
     pthread_mutex_unlock(&mutexIndiceCourant);
     close(hSocketEcoute);
     exit(0);
 }
-  
+
+ int fctLogin(char * chargeUtile)
+ {
+    int temp, i;
+    
+    //loginCsv[temp-1]=NULL; //Enlever \0
+    FILE* filedesc = fopen(loginCsv,"r");
+
+    char *pswCSV = NULL,*usernameCSV = NULL, *buf = NULL;
+    char *psw = NULL,*username = NULL;
+    size_t len = 0;
+    ssize_t read;
+    
+    username=strtok(chargeUtile,&sepTrame);
+    psw=strtok(NULL,&sepTrame);//recupere apres sepTrame
+    
+    i=0;
+    do
+    {
+        read = getline(&buf,&len,filedesc);
+        if(read != -1)
+        {
+
+            usernameCSV=strtok(buf,&sepCsv);//recupere avant egal
+            pswCSV=strtok(NULL,&sepCsv);//recupere apres egal
+            temp = strlen(pswCSV);
+            pswCSV[temp-1]=NULL; //Enlever \0
+
+            
+            if(strcmp(username, usernameCSV) == 0 && strcmp(psw, pswCSV) == 0)
+                return 0;
+            
+            i++;
+        }
+    } while(read != -1);
+    
+    return -1;
+ }

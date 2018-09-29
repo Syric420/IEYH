@@ -10,6 +10,7 @@
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
                    projectFiles="true">
+      <itemPath>../Serveur_Materiel/ServeurConf.conf</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
@@ -39,6 +40,11 @@
       </toolsSet>
       <compileType>
       </compileType>
+      <item path="../Serveur_Materiel/ServeurConf.conf"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
       <item path="../Serveur_Materiel/SocketUtilities.c"
             ex="false"
             tool="0"
@@ -74,6 +80,11 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="../Serveur_Materiel/ServeurConf.conf"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
       <item path="../Serveur_Materiel/SocketUtilities.c"
             ex="false"
             tool="0"

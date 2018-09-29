@@ -35,7 +35,6 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/AccessMaterial.o \
 	${OBJECTDIR}/ServeurMateriel.o \
 	${OBJECTDIR}/SocketUtilities.o
 
@@ -63,11 +62,6 @@ LDLIBSOPTIONS=
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/serveur_materiel: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/serveur_materiel ${OBJECTFILES} ${LDLIBSOPTIONS}
-
-${OBJECTDIR}/AccessMaterial.o: AccessMaterial.c
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} "$@.d"
-	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/AccessMaterial.o AccessMaterial.c
 
 ${OBJECTDIR}/ServeurMateriel.o: ServeurMateriel.c
 	${MKDIR} -p ${OBJECTDIR}
