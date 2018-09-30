@@ -1,18 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/* 
- * File:   SocketUtilities.c
- * Author: syric
- *
- * Created on September 24, 2018, 7:46 AM
- */
 #include "SocketUtilities.h"
-
-
 
 int receiveSize(int socket, void * struc, int size)
 {
@@ -20,20 +6,20 @@ int receiveSize(int socket, void * struc, int size)
     tailleMsgRecu=0;
     do
     {
-        puts("Passage boucle de reception");
+        printf("receiveSize: Passage boucle de reception\n");
         if ( (nbreBytesRecus = recv(socket, ((char*)struc) + tailleMsgRecu, size-tailleMsgRecu, 0))== -1) /* pas message urgent */
         {
-            printf("Erreur sur le recv de la socket %d\n", errno);
+            printf("receiveSize: Erreur sur le recv de la socket %d\n", errno);
             close(socket); /* Fermeture de la socket */
             close(socket); /* Fermeture de la socket */
             exit(1);
         }
         else
         {
-            printf("Taile msg recu = %d et taille attendue = %d\n", tailleMsgRecu, size);
+            printf("receiveSize: Taile msg recu = %d et taille attendue = %d\n", tailleMsgRecu, size);
             tailleMsgRecu += nbreBytesRecus;
         }
-        printf("Taill msg = %d et nbreBytes = %d \n", tailleMsgRecu, nbreBytesRecus);
+        printf("receiveSize: Taille msg = %d et nbreBytes = %d \n", tailleMsgRecu, nbreBytesRecus);
     }while (nbreBytesRecus != 0 && nbreBytesRecus != -1 &&tailleMsgRecu <size );
     return tailleMsgRecu;
 }
@@ -51,7 +37,7 @@ int receiveSep(int socket, char * msgClient, char sep)
     tailleO=sizeof(int);
     if (getsockopt(socket, IPPROTO_TCP, TCP_MAXSEG, &tailleS, &tailleO) == -1)
     {
-        printf("Erreur sur le getsockopt de la socket %d\n", errno);
+        printf("receiveSep: Erreur sur le getsockopt de la socket %d\n", errno);
         exit(1);
     }
     else
@@ -64,7 +50,7 @@ int receiveSep(int socket, char * msgClient, char sep)
     {
         if ( (nbreBytesRecus = recv(socket, buf, tailleS, 0)) == -1)
         {
-            printf("Erreur sur le recv de la socket %d\n", errno);
+            printf("receiveSep: Erreur sur le recv de la socket %d\n", errno);
             close(socket); close(socket); exit(1);
         }
         else
@@ -94,48 +80,44 @@ char marqueurRecu (char *m, char sep)
             return 0;
         }   
     }
-    
     return -1;
 }
 
 int sendSep(int socket,char * msg, char sep)
 {
-  char *buffer;
-  //printf("Ctout sep = %c",sep);
-  fflush(stdout);
-  //buffer = malloc((char)strlen(msg)+sizeof(char));
-  printf("strlen = %d\n",strlen(msg));
-  fflush(stdout);
-  buffer = malloc(sizeof(char) * strlen(msg) + sizeof(char));
-  
-  strcpy(buffer, msg);
-  buffer[strlen(msg)]=sep;
-  //strcat(buffer,sep);
-  printf("Msg dans sendSep = %s", buffer);
-  fflush(stdout);
-  if (send(socket, buffer, strlen(buffer), 0) == -1)
-  {
-    printf("Erreur sur le send de la socket %d\n", errno);
-    close(socket); /* Fermeture de la socket */
-    return -1;
-  }
-  else 
-    return 0;
+	char *buffer;
+	//buffer = malloc((char)strlen(msg)+sizeof(char));
+	printf("sendSep: strlen = %d\n",strlen(msg));
+	fflush(stdout);
+	buffer = malloc(sizeof(char) * strlen(msg) + sizeof(char));
+
+	strcpy(buffer, msg);
+	buffer[strlen(msg)]=sep;
+	//strcat(buffer,sep);
+	printf("sendSep: Msg dans sendSep = %s\n", buffer);
+	fflush(stdout);
+	if (send(socket, buffer, strlen(buffer), 0) == -1)
+	{
+		printf("sendSep: Erreur sur le send de la socket %d\n", errno);
+		close(socket); /* Fermeture de la socket */
+		return -1;
+	}
+	else 
+		return 0;
 }
 
 int sendSize(int socket,void * struc, int size)
 {
-
   if (send(socket, (char*) struc, size, 0) == -1)
   {
-    printf("Erreur sur le send de la socket %d\n", errno);
+    printf("sendSize: Erreur sur le send de la socket %d\n", errno);
     close(socket); /* Fermeture de la socket */
     return -1;
   }
   else return 0;
 }
 
-int connectToServ(char * ip, int port )
+int connectToServ(char * ip, int port)
 {
     int hSocket;
     struct hostent * infosHost; 
@@ -148,12 +130,14 @@ int connectToServ(char * ip, int port )
     hSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (hSocket == -1)
     {
-        printf("ToServ: Erreur de creation de la socket %d\n", errno);
+        printf("connectToServ: Erreur de creation de la socket %d\n", errno);
         exit(1);
     }
-    else printf("ToServ: Creation de la socket OK\n");
-    fflush(stdout);
-    
+    else 
+	{
+		printf("connectToServ: Creation de la socket OK\n");
+    	fflush(stdout);
+    }
     
     /* 3. Préparation de la structure sockaddr_in */
     memset(&adresseSocket, 0, sizeof(struct sockaddr_in));
@@ -167,100 +151,132 @@ int connectToServ(char * ip, int port )
     if (( ret = connect(hSocket, (struct sockaddr *)&adresseSocket, tailleSockaddr_in) )
     == -1)
     {
-        printf("ToServ: Erreur sur connect de la socket %d\n", errno);
+        printf("connectToServ: Erreur sur connect de la socket %d\n", errno);
         close(hSocket);
         return -1;
     }
-    else printf("ToServ: Connect socket OK\n");
+    else printf("connectToServ: Connect socket OK\n");
     
     return hSocket;
 }
 
 int confSockSrv(char *adresse,int Port)
 {
-  struct hostent * infosHost; /*Infos sur le host : pour gethostbyname */
-  struct in_addr adresseIP; /* Adresse Internet au format reseau */
-  struct sockaddr_in adresseSocket;
-  int hSocketEcoute;
+	struct hostent * infosHost; /*Infos sur le host : pour gethostbyname */
+	struct in_addr adresseIP; /* Adresse Internet au format reseau */
+	struct sockaddr_in adresseSocket;
+	int hSocketEcoute;
 
-  hSocketEcoute = socket(AF_INET,SOCK_STREAM,0);
-  if (hSocketEcoute == -1)
-  {
-    printf("Erreur de creation de la socket %d\n", errno);
-    exit(1);
-  }
-  else printf("Creation de la socket OK\n");
-  /* 3. Acquisition des informations sur l'ordinateur local */
-  if ( (infosHost = gethostbyname(adresse))==0)
-  {
-    printf("Erreur d'acquisition d'infos sur le host %d\n", errno);
-    exit(1);
-  }
-  else printf("Acquisition infos host OK\n");
-  memcpy(&adresseIP, infosHost->h_addr, infosHost->h_length);
-  printf("Adresse IP = %s\n",inet_ntoa(adresseIP));
-  /* 4. Préparation de la structure sockaddr_in */
-  memset(&adresseSocket, 0, sizeof(struct sockaddr_in));
-  adresseSocket.sin_family = AF_INET;
-  adresseSocket.sin_port = htons(Port);
-  memcpy(&adresseSocket.sin_addr, infosHost->h_addr, infosHost->h_length);
-  /* 5. Le système prend connaissance de l'adresse et du port de la socket */
-  if (bind(hSocketEcoute, (struct sockaddr *)&adresseSocket,
-  sizeof(struct sockaddr_in)) == -1)
-  {
-    printf("Erreur sur le bind de la socket %d\n", errno);
-    exit(1);
-  }
-  else printf("Bind adresse et port socket OK\n");
+	hSocketEcoute = socket(AF_INET,SOCK_STREAM,0);
+	if (hSocketEcoute == -1)
+	{
+		printf("confSockSrv: Erreur de creation de la socket %d\n", errno);
+		exit(1);
+	}
+	else 
+	{
+		printf("confSockSrv: Creation de la socket OK\n");
+	}
 
-  return hSocketEcoute;
+	/* 3. Acquisition des informations sur l'ordinateur local */
+	if ( (infosHost = gethostbyname(adresse))==0)
+	{
+		printf("confSockSrv: Erreur d'acquisition d'infos sur le host %d\n", errno);
+		exit(1);
+	}
+	else 
+		printf("confSockSrv: Acquisition infos host OK\n");
+	memcpy(&adresseIP, infosHost->h_addr, infosHost->h_length);
+	printf("confSockSrv: Adresse IP = %s\n",inet_ntoa(adresseIP));
+
+	/* 4. Préparation de la structure sockaddr_in */
+	memset(&adresseSocket, 0, sizeof(struct sockaddr_in));
+	adresseSocket.sin_family = AF_INET;
+	adresseSocket.sin_port = htons(Port);
+	memcpy(&adresseSocket.sin_addr, infosHost->h_addr, infosHost->h_length);
+
+	/* 5. Le système prend connaissance de l'adresse et du port de la socket */
+	if (bind(hSocketEcoute, (struct sockaddr *)&adresseSocket, sizeof(struct sockaddr_in)) == -1)
+	{
+		printf("confSockSrv: Erreur sur le bind de la socket %d\n", errno);
+		exit(1);
+	}
+	else 
+		printf("confSockSrv: Bind adresse et port socket OK\n");
+
+	return hSocketEcoute;
 }
+
+int acceptServ(int hSocketEcoute)
+{
+	//struct hostent * infosHost; /*Infos sur le host : pour gethostbyname */
+	struct in_addr adresseIP; /* Adresse Internet au format reseau */
+	struct sockaddr_in adresseSocket;
+	int tailleSockaddr_in = sizeof(struct sockaddr_in);
+	int hSocketService;
+
+	if ( (hSocketService = accept(hSocketEcoute, (struct sockaddr *)&adresseSocket, &tailleSockaddr_in)) == -1)
+	{
+		printf("acceptServ: Erreur sur l'accept de la socket %d\n", errno);
+		close(hSocketEcoute); /* Fermeture de la socket */
+		exit(1);
+	}
+	else 
+		printf("acceptServ: Accept socket OK\n");
+
+	return hSocketService;
+}
+
 int confSockCli(char *adresse,int Port)
 {
-  struct hostent * infosHost; /*Infos sur le host : pour gethostbyname */
-  struct in_addr adresseIP; /* Adresse Internet au format reseau */
-  struct sockaddr_in adresseSocket;
-  int hSocket,ret,tailleSockaddr_in;
+	struct hostent * infosHost; /*Infos sur le host : pour gethostbyname */
+	struct in_addr adresseIP; /* Adresse Internet au format reseau */
+	struct sockaddr_in adresseSocket;
+	int hSocket,ret,tailleSockaddr_in;
 
-  hSocket = socket(AF_INET, SOCK_STREAM, 0);
-  if (hSocket == -1)
-  {
-    printf("Erreur de creation de la socket %d\n", errno);
-    exit(1);
-  }
-  else printf("Creation de la socket OK\n");
-  /* 2. Acquisition des informations sur l'ordinateur distant */
-  if ( (infosHost = gethostbyname(adresse))==0)
-  {
-    printf("Erreur d'acquisition d'infos sur le host distant %d\n", errno);
-    exit(1);
-  }
-  else printf("Acquisition infos host distant OK\n");
-  memcpy(&adresseIP, infosHost->h_addr, infosHost->h_length);
-  printf("Adresse IP = %s\n",inet_ntoa(adresseIP));
-  /* 3. Préparation de la structure sockaddr_in */
-  memset(&adresseSocket, 0, sizeof(struct sockaddr_in));
-  adresseSocket.sin_family = AF_INET; /* Domaine */
-  adresseSocket.sin_port = htons(Port);
+	hSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (hSocket == -1)
+	{
+		printf("confSockCli: Erreur de creation de la socket %d\n", errno);
+		exit(1);
+	}
+	else 
+		printf("confSockCli: Creation de la socket OK\n");
 
-  memcpy(&adresseSocket.sin_addr, infosHost->h_addr,infosHost->h_length);
-  tailleSockaddr_in = sizeof(struct sockaddr_in);
-  if (( ret = connect(hSocket, (struct sockaddr *)&adresseSocket, tailleSockaddr_in) )
-  == -1)
-  {
-    printf("Erreur sur connect de la socket %d\n", errno);
-    switch(errno)
-    {
-      case EBADF : printf("EBADF - hsocket n'existe pas\n");
-      break;
-      default : printf("Erreur inconnue ?\n");
-    }
-    close(hSocket);
-    exit(1);
-  }
-  else printf("Connect socket OK\n");
+	/* 2. Acquisition des informations sur l'ordinateur distant */
+	if ( (infosHost = gethostbyname(adresse))==0)
+	{
+	printf("confSockCli: Erreur d'acquisition d'infos sur le host distant %d\n", errno);
+	exit(1);
+	}
+	else 
+		printf("confSockCli: Acquisition infos host distant OK\n");
+	memcpy(&adresseIP, infosHost->h_addr, infosHost->h_length);
+	printf("confSockCli: Adresse IP = %s\n",inet_ntoa(adresseIP));
 
-  return hSocket;
+	/* 3. Préparation de la structure sockaddr_in */
+	memset(&adresseSocket, 0, sizeof(struct sockaddr_in));
+	adresseSocket.sin_family = AF_INET; /* Domaine */
+	adresseSocket.sin_port = htons(Port);
+	memcpy(&adresseSocket.sin_addr, infosHost->h_addr,infosHost->h_length);
+	tailleSockaddr_in = sizeof(struct sockaddr_in);
+	if (( ret = connect(hSocket, (struct sockaddr *)&adresseSocket, tailleSockaddr_in)) == -1)
+	{
+		printf("confSockCli: Erreur sur connect de la socket %d\n", errno);
+		switch(errno)
+		{
+			case EBADF: 
+				printf("confSockCli: EBADF - hsocket n'existe pas\n");
+				break;
+			default : 
+				printf("confSockCli: Erreur inconnue ?\n");
+		}
+		close(hSocket);
+		exit(1);
+	}
+	else 
+		printf("confSockCli: Connect socket OK\n");
 
+	return hSocket;
 }
 

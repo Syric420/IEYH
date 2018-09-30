@@ -42,4 +42,5 @@ void * fctThread(void * param);
 char * getThreadIdentity();
 void Config();
 int login(char *,char*);
+void traiteRequete(char *, int);
 #endif
