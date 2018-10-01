@@ -1,8 +1,11 @@
 #include "ServeurMateriel.h"
 #include "SocketUtilities.h"
+#include "AccessMaterial.h"
 
 //les mutex + variables de conditions
 pthread_mutex_t mutexIndiceCourant;
+pthread_mutex_t mutexFichierPedalo;
+pthread_mutex_t mutexFichierBarque;
 pthread_cond_t condIndiceCourant;
 
 int hSocketEcoute;
@@ -26,11 +29,19 @@ int main(int argc, char** argv)
 	sigact.sa_handler=HandlerQuit;
 	if (sigaction(SIGINT,&sigact,NULL) == -1)
 		perror("main: Erreur d'armement du signal SIGQUIT");
+        
+        /*Initialisation des mutex et variable cond*/
+        pthread_mutex_init(&mutexIndiceCourant, NULL);
+        pthread_mutex_init(&mutexFichierPedalo, NULL);
+        pthread_mutex_init(&mutexFichierBarque, NULL);
+        pthread_cond_init(&condIndiceCourant, NULL);
+        //-------------------------------------------
     
 	/* Socket d'ecoute pour l'attente */
 	int i,j, /* variables d'iteration */
 	retRecv; /* Code de retour dun recv */
 	
+        
 	char msgServeur[MAXSTRING];
 	int hSocketService;
 
@@ -39,11 +50,16 @@ int main(int argc, char** argv)
 
 	hSocketEcoute = confSockSrv("localhost", Port_Service);
 
+        
+        
+        
+        
 	/* 6. Lancement des threads */
 	for (i=0; i<NB_MAX_CLIENTS; i++)
 	{
 		ret = pthread_create(&threadHandle[i],NULL,fctThread, (void*)i);
 		printf("main: Thread secondaire %d lance !\n", i);
+                fflush(stdout);
 		ret = pthread_detach(threadHandle[i]);
 	}
     
@@ -163,20 +179,20 @@ void traiteRequete(char * req, int socket)
     char *chargeUtile = NULL,*str;
     char msgServeur[MAXSTRING];
     
-    printf("traiteRequete: Req = %s\n", req);
-    fflush(stdout);
+    //printf("traiteRequete: Req = %s\n", req);
+    //fflush(stdout);
     //On découpe la chaine pour connaitre le type de requête
     str=strtok(req,&sepCsv);//recupere avant egal
     chargeUtile=strtok(NULL,&sepCsv);//recupere apres ";"
     typeReq=atoi(str);
 
-    printf("traiteRequete: typeReq = %d\nMessage = %s\n", typeReq, chargeUtile);
-    fflush(stdout);
+    //printf("traiteRequete: typeReq = %d\nMessage = %s\n", typeReq, chargeUtile);
+    //fflush(stdout);
     
     switch(typeReq)
     {
         case 1: //login
-            printf("traiteRequete: case 1: login\n");
+            //printf("traiteRequete: case 1: login\n");
             fflush(stdout);
             int ret = fctLogin(chargeUtile);
             if(ret == 0)
@@ -187,11 +203,14 @@ void traiteRequete(char * req, int socket)
                 //strcpy(msgServeur, "1;NOK;Utilisateur ou mot de passe errone");
                 
             }
-            printf("traiteRequete: envoi du msgServeur = %s\n", req);
-            fflush(stdout);
+            //printf("traiteRequete: envoi du msgServeur = %s\n", req);
+            //fflush(stdout);
             sendSep(socket, msgServeur, finTrame);
-			printf("traiteRequete: message envoyé!\n");
-    		fflush(stdout);
+            //printf("traiteRequete: message envoyé!\n");
+            //fflush(stdout);
+            break;
+        case 2:
+            
             break;
     }
     //--------------------------------------------------------
