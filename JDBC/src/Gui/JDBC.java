@@ -174,16 +174,25 @@ public class JDBC extends javax.swing.JFrame {
         jLabel3.setText("Sur quel champ :");
 
         jCheckBox1.setText("Ajouter condtion");
+        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox1ActionPerformed(evt);
+            }
+        });
 
         jComboBox_champ.setModel(dcbchampmodel);
+        jComboBox_champ.setEnabled(false);
 
         jLabel4.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jLabel4.setText("Opérateur :");
 
         jComboBox_Operateur.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "<", ">", "=", "<=", ">=" }));
+        jComboBox_Operateur.setEnabled(false);
 
         jLabel5.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jLabel5.setText("Condition :");
+
+        jTF_Condition.setEnabled(false);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -311,22 +320,32 @@ public class JDBC extends javax.swing.JFrame {
 
     private void jButton_ExecuteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_ExecuteActionPerformed
         try {
+            //Préparation des statement
+            PreparedStatement pStmt = null;
+            ResultSet rs = null;
             //Récupération des différents champs dans la GUI
             int index = jComboBox_Choix.getSelectedIndex();
             switch(index)
             {
-                case 1:
+                case 0:
                     //Afficher tuples 
+                    if(jCheckBox1.isSelected()==false)
+                    {
+                        pStmt = BD.getCon().prepareStatement("select * from "+dcbtablemodel.getSelectedItem().toString());
+ 
+                        System.out.println("prepared Statement = "+pStmt.toString());
+                        rs = pStmt.executeQuery();
+                        
+                        
+                    }
                     break;
-                case 2:
+                case 1:
                     //Afficher nombre de tuples
                     break;
-                case 3:
+                case 2:
                     //Modifier tuple
                     break;
             }
-            //----------------------------------------------
-            ResultSet rs = BD.executeQuery("");
             ResultSetMetaData rsmd = rs.getMetaData();
             initializeTable(rsmd);
             DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
@@ -392,7 +411,21 @@ public class JDBC extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem4ActionPerformed
 
     private void jComboBox_ChoixActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox_ChoixActionPerformed
-        
+        if(jComboBox_Choix.getSelectedIndex()==2)
+        {
+            //Si on est sur modifier tuple il faut que l'utilisateur spécifie le champ qu'il veut changer
+            jCheckBox1.setSelected(true);
+            jComboBox_champ.setEnabled(true);
+            jComboBox_Operateur.setEnabled(true);
+            jTF_Condition.setEnabled(true); 
+        }
+        else
+        {
+            jCheckBox1.setSelected(false);
+            jComboBox_champ.setEnabled(false);
+            jComboBox_Operateur.setEnabled(false);
+            jTF_Condition.setEnabled(false); 
+        }
     }//GEN-LAST:event_jComboBox_ChoixActionPerformed
 
     private void jComboBox_tableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox_tableActionPerformed
@@ -409,6 +442,21 @@ public class JDBC extends javax.swing.JFrame {
             Logger.getLogger(JDBC.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jComboBox_tableActionPerformed
+
+    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+        if(jCheckBox1.isSelected())
+        {
+            jComboBox_champ.setEnabled(true);
+            jComboBox_Operateur.setEnabled(true);
+            jTF_Condition.setEnabled(true);    
+        }
+        else
+        {
+            jComboBox_champ.setEnabled(false);
+            jComboBox_Operateur.setEnabled(false);
+            jTF_Condition.setEnabled(false);   
+        }
+    }//GEN-LAST:event_jCheckBox1ActionPerformed
 
     /**
      * @param args the command line arguments
