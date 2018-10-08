@@ -10,9 +10,11 @@ import java.sql.*;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,7 +28,7 @@ import javax.swing.DefaultComboBoxModel;
  */
 
 public class JDBC extends javax.swing.JFrame {
-    DefaultComboBoxModel dcbtablemodel = new DefaultComboBoxModel(), dcbchampmodel = new DefaultComboBoxModel(); 
+    DefaultComboBoxModel dcbtablemodel = new DefaultComboBoxModel(), dcbchampmodel = new DefaultComboBoxModel(), dcbchampmodel2 = new DefaultComboBoxModel(); 
     
     BeanBD BD;
     boolean edit=false;
@@ -80,6 +82,11 @@ public class JDBC extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jComboBox_table = new javax.swing.JComboBox<>();
         jComboBox_Choix = new javax.swing.JComboBox<>();
+        jLabel8 = new javax.swing.JLabel();
+        jComboBox_champ2 = new javax.swing.JComboBox<>();
+        jLabel10 = new javax.swing.JLabel();
+        jTF_ValeurAction = new javax.swing.JTextField();
+        jLabel12 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jCheckBox1 = new javax.swing.JCheckBox();
@@ -88,6 +95,7 @@ public class JDBC extends javax.swing.JFrame {
         jComboBox_Operateur = new javax.swing.JComboBox<>();
         jLabel5 = new javax.swing.JLabel();
         jTF_Condition = new javax.swing.JTextField();
+        jLabel7 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem1 = new javax.swing.JMenuItem();
@@ -139,6 +147,22 @@ public class JDBC extends javax.swing.JFrame {
             }
         });
 
+        jLabel8.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        jLabel8.setText("Modifier champ :");
+
+        jComboBox_champ2.setModel(dcbchampmodel2);
+        jComboBox_champ2.setEnabled(false);
+        jComboBox_champ2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox_champ2ActionPerformed(evt);
+            }
+        });
+
+        jLabel10.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        jLabel10.setText("Valeur :");
+
+        jTF_ValeurAction.setEnabled(false);
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -146,13 +170,28 @@ public class JDBC extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jComboBox_Choix, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jComboBox_table, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(26, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel10)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jTF_ValeurAction, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(jLabel8)
+                                .addGap(51, 51, 51)
+                                .addComponent(jComboBox_champ2, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel1)
+                                    .addComponent(jLabel2))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jComboBox_Choix, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jComboBox_table, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(0, 69, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -165,7 +204,17 @@ public class JDBC extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(jComboBox_table, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jComboBox_champ2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel10)
+                        .addComponent(jTF_ValeurAction, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(34, 34, 34))
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Condition"));
@@ -182,6 +231,11 @@ public class JDBC extends javax.swing.JFrame {
 
         jComboBox_champ.setModel(dcbchampmodel);
         jComboBox_champ.setEnabled(false);
+        jComboBox_champ.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox_champActionPerformed(evt);
+            }
+        });
 
         jLabel4.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jLabel4.setText("Opérateur :");
@@ -190,7 +244,7 @@ public class JDBC extends javax.swing.JFrame {
         jComboBox_Operateur.setEnabled(false);
 
         jLabel5.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
-        jLabel5.setText("Condition :");
+        jLabel5.setText("Valeur :");
 
         jTF_Condition.setEnabled(false);
 
@@ -201,20 +255,24 @@ public class JDBC extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jCheckBox1)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jComboBox_champ, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jComboBox_Operateur, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jCheckBox1)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jComboBox_champ, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(jLabel4)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jComboBox_Operateur, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(118, Short.MAX_VALUE))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTF_Condition, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(35, Short.MAX_VALUE))
+                        .addComponent(jTF_Condition, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -225,15 +283,17 @@ public class JDBC extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(jComboBox_champ, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                .addGap(24, 24, 24)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(jComboBox_Operateur, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 14, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel5)
-                    .addComponent(jTF_Condition, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addGap(12, 12, 12)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel5)
+                        .addComponent(jTF_Condition, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jMenu1.setText("File");
@@ -250,7 +310,7 @@ public class JDBC extends javax.swing.JFrame {
 
         jMenu2.setText("Instructions");
 
-        jMenuItem2.setText("Select *");
+        jMenuItem2.setText("Liste des voyageurs inscrits à une activité à une date donnée");
         jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItem2ActionPerformed(evt);
@@ -258,7 +318,7 @@ public class JDBC extends javax.swing.JFrame {
         });
         jMenu2.add(jMenuItem2);
 
-        jMenuItem3.setText("Select count(*)");
+        jMenuItem3.setText("Liste voyageurs sur une certaine période");
         jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItem3ActionPerformed(evt);
@@ -266,7 +326,7 @@ public class JDBC extends javax.swing.JFrame {
         });
         jMenu2.add(jMenuItem3);
 
-        jMenuItem4.setText("Update");
+        jMenuItem4.setText("Age moyen des participants sur une certaine période");
         jMenuItem4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItem4ActionPerformed(evt);
@@ -283,21 +343,19 @@ public class JDBC extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(jScrollPane1))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addComponent(jButton_Execute, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(117, 117, 117)))
+                                .addGap(124, 124, 124)))
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 843, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -305,12 +363,11 @@ public class JDBC extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButton_Execute, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton_Execute, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 14, Short.MAX_VALUE)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 273, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -321,6 +378,7 @@ public class JDBC extends javax.swing.JFrame {
     private void jButton_ExecuteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_ExecuteActionPerformed
         try {
             //Préparation des statement
+            ResultSetMetaData rsmd;
             PreparedStatement pStmt = null;
             ResultSet rs = null;
             //Récupération des différents champs dans la GUI
@@ -331,22 +389,161 @@ public class JDBC extends javax.swing.JFrame {
                     //Afficher tuples 
                     if(jCheckBox1.isSelected()==false)
                     {
+                        //Si pas de condition
                         pStmt = BD.getCon().prepareStatement("select * from "+dcbtablemodel.getSelectedItem().toString());
  
                         System.out.println("prepared Statement = "+pStmt.toString());
                         rs = pStmt.executeQuery();
+                    }
+                    else
+                    {
+                        //Si condition
+                        pStmt = BD.getCon().prepareStatement("select * from "+dcbtablemodel.getSelectedItem().toString());
+                        rs = pStmt.executeQuery();
+                        rsmd = rs.getMetaData();
+                        String className = rsmd.getColumnClassName(jComboBox_champ.getSelectedIndex()+1);
+                        pStmt = BD.getCon().prepareStatement("select * from "+dcbtablemodel.getSelectedItem().toString()+" where "+jComboBox_champ.getSelectedItem().toString()+" "+jComboBox_Operateur.getSelectedItem().toString()+" ?");
+                        //Il faut savoir si c'est un string une date donc regarde la comboBox
+                        
+                        switch(className)
+                        {
+                        case "java.lang.Integer":
+                            //int
+                                pStmt.setInt(1, Integer.parseInt(jTF_Condition.getText()));
+                            break;
+                        case "java.lang.String":
+                             //String
+                                pStmt.setString(1, jTF_Condition.getText());
+                            break;
+                        case "java.lang.Long":
+                                pStmt.setLong(1, Long.parseLong(jTF_Condition.getText()));
+                            break;
+                        case "java.lang.Float":
+                            pStmt.setFloat(1, Float.parseFloat(jTF_Condition.getText()));
+                            break;
+                        case "java.lang.Boolean":
+                            pStmt.setBoolean(1, Boolean.parseBoolean(jTF_Condition.getText()));
+                            break;
+                        case "java.sql.Date":
+                            //Date
+                                SimpleDateFormat sdf1 = new SimpleDateFormat("dd/MM/yyyy");
+                                java.util.Date date = sdf1.parse(jTF_Condition.getText());
+                                java.sql.Date sqlDate = new java.sql.Date(date.getTime());  
+                                pStmt.setDate(1, sqlDate);
+                            break; 
+                                
+                        }
                         
                         
+                        System.out.println("prepared Statement = "+pStmt.toString());
+                        rs = pStmt.executeQuery();
                     }
                     break;
                 case 1:
                     //Afficher nombre de tuples
+                    pStmt = BD.getCon().prepareStatement("select count(*) from "+dcbtablemodel.getSelectedItem().toString());
+                    rs = pStmt.executeQuery();
                     break;
                 case 2:
                     //Modifier tuple
+                    if(jCheckBox1.isSelected()==false)
+                    {
+                        JOptionPane.showMessageDialog(this, "Veuillez ajouter une condition");
+                        break;
+                    }
+                    else
+                    {
+                        
+                        //Si condition ajoutée mais ici il est obligé
+                        pStmt = BD.getCon().prepareStatement("select * from "+dcbtablemodel.getSelectedItem().toString());
+                        rs = pStmt.executeQuery();
+                        rsmd = rs.getMetaData();
+                        //Préparation de la prepared statement
+                        pStmt = BD.getCon().prepareStatement("UPDATE "+jComboBox_table.getSelectedItem().toString()+" SET "+jComboBox_champ2.getSelectedItem().toString()+" = ?"
+                                +" WHERE "+jComboBox_champ.getSelectedItem().toString()+" "+jComboBox_Operateur.getSelectedItem().toString()+" ?");
+                        
+                        //On ajoute la première valeur qui est la valeur située dans "action"
+
+                        String className = rsmd.getColumnClassName(jComboBox_champ2.getSelectedIndex()+1); // +1 car getColumnClass commence à 1 et getSelectedIndex à 0
+                        System.out.println(jComboBox_champ2.getSelectedItem().toString()+" =?= "+className);
+                        switch(className)
+                        {
+                        case "java.lang.Integer":
+                            //int
+                            
+                                pStmt.setInt(1, Integer.parseInt(jTF_ValeurAction.getText()));
+                            break;
+                        case "java.lang.String":
+                             //String
+                                pStmt.setString(1, jTF_ValeurAction.getText());
+                            break;
+                        case "java.lang.Long":
+                                pStmt.setLong(1, Long.parseLong(jTF_ValeurAction.getText()));
+                            break;
+                        case "java.lang.Float":
+                            pStmt.setFloat(1, Float.parseFloat(jTF_ValeurAction.getText()));
+                            break;
+                        case "java.lang.Boolean":
+                            pStmt.setBoolean(1, Boolean.parseBoolean(jTF_ValeurAction.getText()));
+                            break;
+                        case "java.sql.Date":
+                            //Date
+                                SimpleDateFormat sdf1 = new SimpleDateFormat("dd/MM/yyyy");
+                                java.util.Date date = sdf1.parse(jTF_ValeurAction.getText());
+                                java.sql.Date sqlDate = new java.sql.Date(date.getTime());  
+                                pStmt.setDate(1, sqlDate);
+                            break; 
+                                
+                        }
+                        
+                        
+                        //On ajoute la deuxieme valeur qui est la condition
+                        
+                        className = rsmd.getColumnClassName(jComboBox_champ.getSelectedIndex()+1);
+                        
+                        //Il faut savoir si c'est un string une date donc regarde la comboBox
+                        //System.out.println(jComboBox_champ.getSelectedItem().toString()+" =?= "+className);
+                        switch(className)
+                        {
+                        case "java.lang.Integer":
+                            //int
+                            
+                                pStmt.setInt(2, Integer.parseInt(jTF_Condition.getText()));
+                            break;
+                        case "java.lang.String":
+                             //String
+                                pStmt.setString(2, jTF_Condition.getText());
+                            break;
+                        case "java.lang.Long":
+                                pStmt.setLong(2, Long.parseLong(jTF_Condition.getText()));
+                            break;
+                        case "java.lang.Float":
+                            pStmt.setFloat(2, Float.parseFloat(jTF_Condition.getText()));
+                            break;
+                        case "java.lang.Boolean":
+                            pStmt.setBoolean(2, Boolean.parseBoolean(jTF_Condition.getText()));
+                            break;
+                        case "java.sql.Date":
+                            //Date
+                                SimpleDateFormat sdf1 = new SimpleDateFormat("dd/MM/yyyy");
+                                java.util.Date date = sdf1.parse(jTF_Condition.getText());
+                                java.sql.Date sqlDate = new java.sql.Date(date.getTime());  
+                                pStmt.setDate(2, sqlDate);
+                            break; 
+                                
+                        }
+                         
+                        //System.out.println("prepared Statement = "+pStmt.toString());
+                        pStmt.executeUpdate();
+                        JOptionPane.showMessageDialog(this, "Champ bien modifié");
+                    }
                     break;
             }
-            ResultSetMetaData rsmd = rs.getMetaData();
+            
+            
+            
+            
+            rsmd = rs.getMetaData();
             initializeTable(rsmd);
             DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
             
@@ -375,6 +572,16 @@ public class JDBC extends javax.swing.JFrame {
                             long l =  rs.getLong(i);
                             vec.add(l);
                             break;
+                        case "java.lang.Float":
+                            //System.out.println("String "+rsmd.getColumnClassName(i));
+                            float fl =  rs.getFloat(i);
+                            vec.add(fl);
+                            break;
+                        case "java.lang.Boolean":
+                            //System.out.println("String "+rsmd.getColumnClassName(i));
+                            boolean bool =  rs.getBoolean(i);
+                            vec.add(bool);
+                            break;
                         case "java.sql.Date":
                             Date date = rs.getDate(i);
                             //System.out.println(date);
@@ -385,12 +592,13 @@ public class JDBC extends javax.swing.JFrame {
                             break;
                     }
                 }
-                if(!rs.wasNull())
                     dtm.addRow(vec);
             }
         } catch (SQLException ex) {
-            Logger.getLogger(JDBC.class.getName()).log(Level.SEVERE, null, ex);
+            //Logger.getLogger(JDBC.class.getName()).log(Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(this, "Erreur avec l'instruction : "+ex.getMessage());
+        } catch (ParseException ex) {
+            Logger.getLogger(JDBC.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jButton_ExecuteActionPerformed
 
@@ -418,6 +626,8 @@ public class JDBC extends javax.swing.JFrame {
             jComboBox_champ.setEnabled(true);
             jComboBox_Operateur.setEnabled(true);
             jTF_Condition.setEnabled(true); 
+            jComboBox_champ2.setEnabled(true);
+            jTF_ValeurAction.setEnabled(true);
         }
         else
         {
@@ -425,6 +635,8 @@ public class JDBC extends javax.swing.JFrame {
             jComboBox_champ.setEnabled(false);
             jComboBox_Operateur.setEnabled(false);
             jTF_Condition.setEnabled(false); 
+            jComboBox_champ2.setEnabled(false);
+            jTF_ValeurAction.setEnabled(false);;
         }
     }//GEN-LAST:event_jComboBox_ChoixActionPerformed
 
@@ -432,12 +644,17 @@ public class JDBC extends javax.swing.JFrame {
         try {
             
             dcbchampmodel.removeAllElements();
+            dcbchampmodel2.removeAllElements();
             ResultSet rs = BD.executeQuery("select * from "+dcbtablemodel.getSelectedItem().toString());
             rs.beforeFirst();
             ResultSetMetaData rsmd = rs.getMetaData();
             int nbCol= rsmd.getColumnCount();
             for(int i=1; i<= nbCol; i++)
+            {
                 dcbchampmodel.addElement(rsmd.getColumnName(i)); 
+                dcbchampmodel2.addElement(rsmd.getColumnName(i)); 
+            }
+                
         } catch (SQLException ex) {
             Logger.getLogger(JDBC.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -448,7 +665,7 @@ public class JDBC extends javax.swing.JFrame {
         {
             jComboBox_champ.setEnabled(true);
             jComboBox_Operateur.setEnabled(true);
-            jTF_Condition.setEnabled(true);    
+            jTF_Condition.setEnabled(true);
         }
         else
         {
@@ -457,6 +674,14 @@ public class JDBC extends javax.swing.JFrame {
             jTF_Condition.setEnabled(false);   
         }
     }//GEN-LAST:event_jCheckBox1ActionPerformed
+
+    private void jComboBox_champActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox_champActionPerformed
+        
+    }//GEN-LAST:event_jComboBox_champActionPerformed
+
+    private void jComboBox_champ2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox_champ2ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jComboBox_champ2ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -499,12 +724,17 @@ public class JDBC extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> jComboBox_Choix;
     private javax.swing.JComboBox<String> jComboBox_Operateur;
     private javax.swing.JComboBox<String> jComboBox_champ;
+    private javax.swing.JComboBox<String> jComboBox_champ2;
     private javax.swing.JComboBox<String> jComboBox_table;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
@@ -516,6 +746,7 @@ public class JDBC extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField jTF_Condition;
+    private javax.swing.JTextField jTF_ValeurAction;
     private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }
