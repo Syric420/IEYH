@@ -32,6 +32,7 @@ public class JDBC extends javax.swing.JFrame {
     
     BeanBD BD;
     boolean edit=false;
+    GuiRequete guiRequete = new GuiRequete(this, true);
     /**
      * Creates new form JDBC
      */
@@ -608,6 +609,7 @@ public class JDBC extends javax.swing.JFrame {
 
     private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
         //jTF_Query.setText("Select * from ");
+        guiRequete.setVisible(true);
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
@@ -747,6 +749,6 @@ public class JDBC extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField jTF_Condition;
     private javax.swing.JTextField jTF_ValeurAction;
-    private javax.swing.JTable jTable1;
+    public javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }
