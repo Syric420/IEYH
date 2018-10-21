@@ -131,14 +131,37 @@ public class Login extends javax.swing.JDialog
             else
             {
                 //Login réussi
-                setVisible(false);
+                ((ApplicationForm)this.getParent()).chargeRoom();
+                this.setVisible(false);
+                
             }
         }
     }//GEN-LAST:event_buttonOKActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        // TODO add your handling code here:
-        System.exit(0);
+        req = new RequeteROMP(RequeteROMP.REQUEST_LOGOUT);
+        if(oos != null)
+        {
+            try {
+                oos.writeObject(req);
+                
+                rep = (ReponseROMP) ois.readObject();
+                
+                if(rep.getCode() == ReponseROMP.SUCCESS)
+                {
+                    System.exit(0);
+                }   
+                else
+                {
+                    JOptionPane.showMessageDialog(this, "Erreur dans la deconnexion");
+                    System.exit(0);
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }//GEN-LAST:event_formWindowClosing
 
     

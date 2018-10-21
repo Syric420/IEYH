@@ -5,13 +5,20 @@
  */
 package Gui;
 
+import Class.ReponseROMP;
+import Class.RequeteROMP;
+import Message.MessageCancel;
+import Message.MessageListVector;
 import Utilities.ReadProperties;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -20,11 +27,16 @@ import java.util.logging.Logger;
 public class ApplicationForm extends javax.swing.JFrame {
 
     Login login;
+    PaiementDialog paiementDialog;
+    ReservationDialog reservationDialog;
     Socket socket;
     int port;
     String adresseIP;
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
+    private RequeteROMP req;
+    private ReponseROMP rep;
+    private String mode = "reservation";
     /**
      * Creates new form ApplicationForm
      */
@@ -40,6 +52,8 @@ public class ApplicationForm extends javax.swing.JFrame {
             oos = new ObjectOutputStream(socket.getOutputStream());
             ois = new ObjectInputStream(socket.getInputStream());
             login = new Login(this,true, socket, oos, ois);
+            paiementDialog = new PaiementDialog(this,true, socket, oos, ois);
+            reservationDialog = new ReservationDialog(this,true, socket, oos, ois);
             login.setVisible(true);
         } catch (IOException ex) {
             Logger.getLogger(ApplicationForm.class.getName()).log(Level.SEVERE, null, ex);
@@ -55,22 +69,327 @@ public class ApplicationForm extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jButton1 = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+        jButton2 = new javax.swing.JButton();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        jMenu1 = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
+        jMenuItem2 = new javax.swing.JMenuItem();
+        jMenuItem3 = new javax.swing.JMenuItem();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Application Réservation");
+        setResizable(false);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
+
+        jButton1.setText("Réserver");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "idChambre", "Categorie", "Type", "Prix HTVA"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.Float.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane1.setViewportView(jTable1);
+
+        jButton2.setText("Annuler");
+        jButton2.setEnabled(false);
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
+        jMenu1.setText("File");
+
+        jMenuItem1.setText("Quitter");
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        jMenu1.add(jMenuItem1);
+
+        jMenuBar1.add(jMenu1);
+
+        jMenu2.setText("Mode");
+
+        jMenuItem2.setText("Effectuer paiement ou annulation");
+        jMenuItem2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem2ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem2);
+
+        jMenuItem3.setText("Effectuer réservation");
+        jMenuItem3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem3ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem3);
+
+        jMenuBar1.add(jMenu2);
+
+        setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 515, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(140, 140, 140)
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(57, 57, 57)
+                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 341, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(39, 39, 39))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        req = new RequeteROMP(RequeteROMP.REQUEST_LOGOUT);
+        if(oos != null)
+        {
+            try {
+                oos.writeObject(req);
+                
+                rep = (ReponseROMP) ois.readObject();
+                
+                if(rep.getCode() == ReponseROMP.SUCCESS)
+                {
+                    System.exit(0);
+                }
+                else
+                {
+                    JOptionPane.showMessageDialog(this, "Erreur dans la deconnexion");
+                    System.exit(0);
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_formWindowClosing
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        int indexRow = jTable1.getSelectedRow();
+        if(indexRow != -1)
+        {
+            if(mode.equals("reservation"))
+            {
+                reservationDialog.idChambre = (int) jTable1.getModel().getValueAt(indexRow, 0);//identifiant
+                reservationDialog.prix = (float) jTable1.getModel().getValueAt(indexRow, 3);//prix
+                reservationDialog.setVisible(true);
+            }
+            else if(mode.equals("paiement"))
+            {
+                
+            }
+        }    
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        System.exit(0);
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void jMenuItem2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem2ActionPerformed
+        changeMode("paiement");
+    }//GEN-LAST:event_jMenuItem2ActionPerformed
+
+    private void jMenuItem3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem3ActionPerformed
+        changeMode("reservation");
+    }//GEN-LAST:event_jMenuItem3ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        //Bouton annuler
+        int indexRow = jTable1.getSelectedRow();
+        MessageCancel mc = new MessageCancel();
+        if(indexRow != -1)
+        {
+            try {
+                int idReservation = (int) jTable1.getModel().getValueAt(indexRow, 0);
+                mc.setIdReservation(idReservation);
+                req = new RequeteROMP(RequeteROMP.REQUEST_CROOM, mc);
+                oos.writeObject(req);
+                chargeReservation();
+            } catch (IOException ex) {
+                Logger.getLogger(ApplicationForm.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    void changeMode(String type)
+    {
+        if(type.equals("paiement"))
+        {
+             jTable1.setModel(new javax.swing.table.DefaultTableModel(
+                new Object [][] {
+
+                },
+                new String [] {
+                    "idReservation", "typeReservation", "DateDébut", "DateFin", "Prix", "Payé"
+                }
+            ) {
+                Class[] types = new Class [] {
+                    java.lang.Integer.class, java.lang.String.class, java.lang.Object.class, java.lang.Object.class, java.lang.Float.class, java.lang.Boolean.class
+                };
+                boolean[] canEdit = new boolean [] {
+                    false, false, false, false, false, false
+                };
+
+                public Class getColumnClass(int columnIndex) {
+                    return types [columnIndex];
+                }
+
+                public boolean isCellEditable(int rowIndex, int columnIndex) {
+                    return canEdit [columnIndex];
+                }
+            });
+             
+             jButton1.setText("Payer");
+             jButton2.setEnabled(true);
+             mode="paiement";
+             chargeReservation();
+        }
+        else if (type.equals("reservation"))
+        {
+            jTable1.setModel(new javax.swing.table.DefaultTableModel(
+                new Object [][] {
+
+                },
+                new String [] {
+                    "idChambre", "Categorie", "Type", "Prix HTVA"
+                }
+            ) {
+                Class[] types = new Class [] {
+                    java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.Float.class
+                };
+                boolean[] canEdit = new boolean [] {
+                    false, false, false, false
+                };
+
+                public Class getColumnClass(int columnIndex) {
+                    return types [columnIndex];
+                }
+
+                public boolean isCellEditable(int rowIndex, int columnIndex) {
+                    return canEdit [columnIndex];
+                }
+            });
+            
+            jButton1.setText("Réserver");
+            jButton2.setEnabled(false);
+            mode="reservation";
+            chargeRoom();
+        }
+    }
+    public void chargeRoom()
+    {
+        //Cette méthode permet de demander la liste des chambres et de l'afficher dans une jtable
+        req = new RequeteROMP(RequeteROMP.REQUEST_LISTROOM);
+        if(oos!=null)
+        {
+            try {
+                oos.writeObject(req);
+                DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+                dtm.setRowCount(0);
+                
+                //System.out.println("Req envoyée");
+                //Une fois la requête envoyée, le serveur va nous renvoyer un vecteur de Room
+                
+                MessageListVector mlr = (MessageListVector)ois.readObject();
+                
+                //System.out.println("Taille = "+mlr.getListRoom().size());
+                for(int i=0; i<mlr.getListRoom().size();i++)
+                {
+                    dtm.addRow(mlr.getListRoom().get(i));
+                }
+                
+            } catch (IOException ex) {
+                Logger.getLogger(ApplicationForm.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(ApplicationForm.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+    
+    public void chargeReservation() {
+        //Cette méthode permet de demander la liste des chambres et de l'afficher dans une jtable
+        req = new RequeteROMP(RequeteROMP.REQUEST_LISTRESERV);
+        if(oos!=null)
+        {
+            try {
+                oos.writeObject(req);
+                //System.out.println("Req envoyée");
+                //Une fois la requête envoyée, le serveur va nous renvoyer une linkedlist de vector
+                
+                MessageListVector mlr = (MessageListVector)ois.readObject();
+                
+                DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
+                dtm.setRowCount(0);
+                //System.out.println("Taille = "+mlr.getListRoom().size());
+                for(int i=0; i<mlr.getListRoom().size();i++)
+                {
+                    dtm.addRow(mlr.getListRoom().get(i));
+                }
+                
+            } catch (IOException ex) {
+                Logger.getLogger(ApplicationForm.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(ApplicationForm.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
     /**
      * @param args the command line arguments
      */
@@ -107,5 +426,17 @@ public class ApplicationForm extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JMenuItem jMenuItem3;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
+
+    
 }
