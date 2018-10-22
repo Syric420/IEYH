@@ -182,8 +182,9 @@ public class ReservationDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, rep.getChargeUtile());
             if(rep.getCode()==ReponseROMP.SUCCESS)
             {
-                ((ApplicationForm) this.getParent()).chargeReservation();
-                this.dispose();
+                if(((ApplicationForm) this.getParent()).mode.equals("paiement"))
+                    ((ApplicationForm) this.getParent()).chargeReservation();
+                this.setVisible(false);
             }
                 
             

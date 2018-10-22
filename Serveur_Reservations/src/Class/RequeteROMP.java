@@ -22,6 +22,7 @@ public class RequeteROMP implements Requete, Serializable
     public static final int REQUEST_BROOM = 3;
     public static final int REQUEST_LISTRESERV = 4;
     public static final int REQUEST_CROOM = 5;
+    public static final int REQUEST_PROOM = 6;
 
     private int type;
     private Message message;
@@ -67,28 +68,38 @@ public class RequeteROMP implements Requete, Serializable
                     switch(req.getType())
                     {
                         case REQUEST_LOGIN:
+                            System.out.println("Req = REQUEST_LOGIN");
                             treatLogin();
                             break;
                         case REQUEST_LOGOUT:
+                            System.out.println("Req = REQUEST_LOGOUT");
                             treatLogout();
                             break;
                         case REQUEST_LISTROOM:
+                            System.out.println("Req = REQUEST_LISTROOM");
                             treatListRoom();
                             break;
                         case REQUEST_BROOM:
+                            System.out.println("Req = REQUEST_BROOM");
                             treatBroom();
                             break;
                         case REQUEST_LISTRESERV:
+                            System.out.println("Req = REQUEST_LISTRESERV");
                             treatListReserv();
                             break;
                         case REQUEST_CROOM:
+                            System.out.println("Req = REQUEST_CROOM");
                             treatCroom();
+                            break;
+                        case REQUEST_PROOM:
+                            System.out.println("Req = REQUEST_PROOM");
+                            treatProom();
                             break;
                     }
                     try 
                     {
-                        if(rep!= null)
-                            oos.writeObject(rep);
+                        /*if(rep!= null)
+                            oos.writeObject(rep);*/
                         rep= null;
                         req = (RequeteROMP) ois.readObject();
                     } 
@@ -293,7 +304,7 @@ public class RequeteROMP implements Requete, Serializable
                         vecRoom.add(categorie);
                         vecRoom.add(type);
                         vecRoom.add(prixHtva);
-                        mlr.getListRoom().add(vecRoom);//Mettre ça dans un message et l'envoyer
+                        mlr.getListVector().add(vecRoom);//Mettre ça dans un message et l'envoyer
                     }
                     
                      
@@ -315,42 +326,34 @@ public class RequeteROMP implements Requete, Serializable
                     
                     //Récupération des différentes reservations dans la BD
                     ResultSet rs = BD.executeQuery("Select * from reservation");
-                    
+                    System.out.println("ListReserv");
                      
-                     MessageListVector mlr = new MessageListVector();
+                    MessageListVector mlv = new MessageListVector();
                     //Ca sera une linkedlist de vector pour avoir plus facile à la mettre dans la jtable
                     while(rs.next())
                     {
                         Vector vecRoom = new Vector();
                         int id = rs.getInt(1);
                         
-                        String type;
-                        type = rs.getString(2);
-                        Date dateDebut, dateFin;
-                        dateDebut = rs.getDate(3);
-                        dateFin = rs.getDate(4);
+                        String typeReserv = rs.getString(2);
                         
-                        float prix = rs.getFloat(5);
+                        Date dateDebut = rs.getDate(3);
+                        Date dateFin = rs.getDate(4);
                         
+                        float prixNet = rs.getFloat(5);
                         boolean paye = rs.getBoolean(6);
-                        int refChambre = rs.getInt(8);
-                        int idRef = rs.getInt(9);
                         
                         vecRoom.add(id);
-                        vecRoom.add(type);
+                        vecRoom.add(typeReserv);
                         vecRoom.add(dateDebut);
                         vecRoom.add(dateFin);
-                        vecRoom.add(prix);
+                        vecRoom.add(prixNet);
                         vecRoom.add(paye);
-                        vecRoom.add(refChambre);
-                        vecRoom.add(idRef);
                         
-                        mlr.getListRoom().add(vecRoom);//Mettre ça dans un message et l'envoyer
+                        mlv.getListVector().add(vecRoom);
                     }
                     
-                     
-                     
-                     oos.writeObject(mlr);
+                    oos.writeObject(mlv);
                    
                 } catch (SQLException ex) {
                     Logger.getLogger(RequeteROMP.class.getName()).log(Level.SEVERE, null, ex);
@@ -361,7 +364,7 @@ public class RequeteROMP implements Requete, Serializable
 
             private void treatCroom() {
                 try {
-                    MessageCancel mc = (MessageCancel) req.message;
+                    MessageInt mc = (MessageInt) req.message;
                     PreparedStatement pst = BD.getCon().prepareStatement("DELETE FROM reservation WHERE idReservation = ?");
                     pst.setInt(1, mc.getIdReservation());
                     
@@ -372,6 +375,34 @@ public class RequeteROMP implements Requete, Serializable
                 
 
             }
+            
+            private void treatProom() {
+                try {
+                    MessageInt mc = (MessageInt) req.message;
+                    PreparedStatement pst = BD.getCon().prepareStatement("UPDATE reservation SET boolPaye = '1' WHERE idReservation = ?");
+                    pst.setInt(1, mc.getIdReservation());
+                    
+                    pst.executeUpdate();
+                    
+                    rep = new ReponseROMP(ReponseROMP.SUCCESS);
+                    oos.writeObject(rep);
+                    
+                } catch (SQLException ex) {
+                    try {
+                        Logger.getLogger(RequeteROMP.class.getName()).log(Level.SEVERE, null, ex);
+                        rep = new ReponseROMP(ReponseROMP.FAILED);
+                        oos.writeObject(rep);
+                    } catch (IOException ex1) {
+                        Logger.getLogger(RequeteROMP.class.getName()).log(Level.SEVERE, null, ex1);
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(RequeteROMP.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+                
+            }
+
+            
 
             
             

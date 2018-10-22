@@ -19,8 +19,8 @@ public class MessageListVector implements Message {
         listVec = new LinkedList<Vector>();
     }
 
-    public MessageListVector(LinkedList<Vector> listRoom) {
-        this.listVec = listRoom;
+    public MessageListVector(LinkedList<Vector> listVec) {
+        this.listVec = listVec;
     }
 
     
@@ -28,14 +28,14 @@ public class MessageListVector implements Message {
     /**
      * @return the vecRoom
      */
-    public LinkedList<Vector> getListRoom() {
+    public LinkedList<Vector> getListVector() {
         return listVec;
     }
 
     /**
      * @param vecRoom the vecRoom to set
      */
-    public void setListRoom(LinkedList<Vector> listRoom) {
+    public void setListVector(LinkedList<Vector> listRoom) {
         this.listVec = listRoom;
     }
     

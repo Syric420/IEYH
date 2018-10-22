@@ -9,14 +9,14 @@ package Message;
  *
  * @author Vince
  */
-public class MessageCancel implements Message {
+public class MessageInt implements Message {
     private int idReservation;
 
-    public MessageCancel() {
+    public MessageInt() {
         idReservation = -1;
     }
 
-    public MessageCancel(int idReservation) {
+    public MessageInt(int idReservation) {
         this.idReservation = idReservation;
     }
 

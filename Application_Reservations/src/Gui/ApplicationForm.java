@@ -7,7 +7,7 @@ package Gui;
 
 import Class.ReponseROMP;
 import Class.RequeteROMP;
-import Message.MessageCancel;
+import Message.MessageInt;
 import Message.MessageListVector;
 import Utilities.ReadProperties;
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class ApplicationForm extends javax.swing.JFrame {
     private ObjectInputStream ois;
     private RequeteROMP req;
     private ReponseROMP rep;
-    private String mode = "reservation";
+    String mode = "reservation";
     /**
      * Creates new form ApplicationForm
      */
@@ -233,7 +233,8 @@ public class ApplicationForm extends javax.swing.JFrame {
             }
             else if(mode.equals("paiement"))
             {
-                
+                paiementDialog.idReservation = (int) jTable1.getModel().getValueAt(indexRow, 0);//identifiant
+                paiementDialog.setVisible(true);
             }
         }    
     }//GEN-LAST:event_jButton1ActionPerformed
@@ -253,7 +254,7 @@ public class ApplicationForm extends javax.swing.JFrame {
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         //Bouton annuler
         int indexRow = jTable1.getSelectedRow();
-        MessageCancel mc = new MessageCancel();
+        MessageInt mc = new MessageInt();
         if(indexRow != -1)
         {
             try {
@@ -349,13 +350,14 @@ public class ApplicationForm extends javax.swing.JFrame {
                 
                 MessageListVector mlr = (MessageListVector)ois.readObject();
                 
-                //System.out.println("Taille = "+mlr.getListRoom().size());
-                for(int i=0; i<mlr.getListRoom().size();i++)
+                //System.out.println("Taille = "+mlr.getListVector().size());
+                for(int i=0; i<mlr.getListVector().size();i++)
                 {
-                    dtm.addRow(mlr.getListRoom().get(i));
+                    dtm.addRow(mlr.getListVector().get(i));
                 }
                 
             } catch (IOException ex) {
+                
                 Logger.getLogger(ApplicationForm.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ClassNotFoundException ex) {
                 Logger.getLogger(ApplicationForm.class.getName()).log(Level.SEVERE, null, ex);
@@ -370,20 +372,23 @@ public class ApplicationForm extends javax.swing.JFrame {
         {
             try {
                 oos.writeObject(req);
-                //System.out.println("Req envoyée");
-                //Une fois la requête envoyée, le serveur va nous renvoyer une linkedlist de vector
-                
-                MessageListVector mlr = (MessageListVector)ois.readObject();
                 
                 DefaultTableModel dtm = (DefaultTableModel) jTable1.getModel();
                 dtm.setRowCount(0);
-                //System.out.println("Taille = "+mlr.getListRoom().size());
-                for(int i=0; i<mlr.getListRoom().size();i++)
+                System.out.println("Req envoyée");
+                //Une fois la requête envoyée, le serveur va nous renvoyer une linkedlist de vector
+                
+                MessageListVector mlv = (MessageListVector)ois.readObject();
+                
+                
+                //System.out.println("Taille = "+mlr.getListVector().size());
+                for(int i=0; i<mlv.getListVector().size();i++)
                 {
-                    dtm.addRow(mlr.getListRoom().get(i));
+                    dtm.addRow(mlv.getListVector().get(i));
                 }
                 
             } catch (IOException ex) {
+                System.out.println("Test");
                 Logger.getLogger(ApplicationForm.class.getName()).log(Level.SEVERE, null, ex);
             } catch (ClassNotFoundException ex) {
                 Logger.getLogger(ApplicationForm.class.getName()).log(Level.SEVERE, null, ex);
