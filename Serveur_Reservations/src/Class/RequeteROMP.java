@@ -68,31 +68,31 @@ public class RequeteROMP implements Requete, Serializable
                     switch(req.getType())
                     {
                         case REQUEST_LOGIN:
-                            System.out.println("Req = REQUEST_LOGIN");
+                            //System.out.println("Req = REQUEST_LOGIN");
                             treatLogin();
                             break;
                         case REQUEST_LOGOUT:
-                            System.out.println("Req = REQUEST_LOGOUT");
+                            //System.out.println("Req = REQUEST_LOGOUT");
                             treatLogout();
                             break;
                         case REQUEST_LISTROOM:
-                            System.out.println("Req = REQUEST_LISTROOM");
+                            //System.out.println("Req = REQUEST_LISTROOM");
                             treatListRoom();
                             break;
                         case REQUEST_BROOM:
-                            System.out.println("Req = REQUEST_BROOM");
+                            //System.out.println("Req = REQUEST_BROOM");
                             treatBroom();
                             break;
                         case REQUEST_LISTRESERV:
-                            System.out.println("Req = REQUEST_LISTRESERV");
+                            //System.out.println("Req = REQUEST_LISTRESERV");
                             treatListReserv();
                             break;
                         case REQUEST_CROOM:
-                            System.out.println("Req = REQUEST_CROOM");
+                            //System.out.println("Req = REQUEST_CROOM");
                             treatCroom();
                             break;
                         case REQUEST_PROOM:
-                            System.out.println("Req = REQUEST_PROOM");
+                            //System.out.println("Req = REQUEST_PROOM");
                             treatProom();
                             break;
                     }
@@ -119,72 +119,59 @@ public class RequeteROMP implements Requete, Serializable
             
             private void treatLogin() 
             {
-                MessageLogin m = (MessageLogin)req.message;
-                PreparedStatement pst = null;
-                ReponseROMP rep;
-                
-                if(state.equals("AUTHENTICATED"))
-                {
-                    rep = new ReponseROMP(ReponseROMP.FAILED, "Déjà authentifié");
-                    return;
-                }
-                else
-                {
-                    try {
-                        //Pas encore authentifié
-                        pst = BD.getCon().prepareStatement("select password from login where user = ?");
-                        
-                        pst.setString(1, m.getUsername());
-                        
-                        System.out.println("Requete SQL = "+pst.toString());
-                        rs = pst.executeQuery();
-                        if(rs.first())
-                        {
-                            String mdp =  rs.getString("password");
-                            System.out.println("mdp SQL recu = "+mdp);
-                            System.out.println("mdp requeteROMP = "+m.getPassword());
-                            if(mdp.equals(m.getPassword()))
+                    MessageLogin m = (MessageLogin)req.message;
+                    PreparedStatement pst = null;
+                    ReponseROMP rep=null;
+                    
+                    if(state.equals("AUTHENTICATED"))
+                    {
+                        rep = new ReponseROMP(ReponseROMP.FAILED, "Déjà authentifié");
+                        //return;
+                    }
+                    else
+                    {
+                        try {
+                            //Pas encore authentifié
+                            pst = BD.getCon().prepareStatement("select password from login where user = ?");
+                            
+                            pst.setString(1, m.getUsername());
+                            
+                            System.out.println("Requete SQL = "+pst.toString());
+                            rs = pst.executeQuery();
+                            if(rs.first())
                             {
-                                //Les deux mots de passe sont identiques
-                                rep = new ReponseROMP(ReponseROMP.SUCCESS, "Login réussi");
-                                state = "AUTHENTICATED";
+                                String mdp =  rs.getString("password");
+                                System.out.println("mdp SQL recu = "+mdp);
+                                System.out.println("mdp requeteROMP = "+m.getPassword());
+                                if(mdp.equals(m.getPassword()))
+                                {
+                                    //Les deux mots de passe sont identiques
+                                    rep = new ReponseROMP(ReponseROMP.SUCCESS, "Login réussi");
+                                    state = "AUTHENTICATED";
+                                }
+                                else
+                                {
+                                    rep = new ReponseROMP(ReponseROMP.FAILED, "Mauvais mot de passe");
+                                }
                             }
                             else
                             {
-                                rep = new ReponseROMP(ReponseROMP.FAILED, "Mauvais mot de passe");
+                                rep = new ReponseROMP(ReponseROMP.FAILED, "L'utilisateur n'existe pas");
                             }
+                            
+                            
+                        } catch (SQLException ex) {
+                            Logger.getLogger(RequeteROMP.class.getName()).log(Level.SEVERE, null, ex);
                         }
-                        else
-                        {
-                            rep = new ReponseROMP(ReponseROMP.FAILED, "L'utilisateur n'existe pas");
-                        }
-                        oos.writeObject(rep);
-                        
-                    } catch (SQLException ex) {
-                        Logger.getLogger(RequeteROMP.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException ex) {
-                        Logger.getLogger(RequeteROMP.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                        
-                /*try 
-                {
+                    
+                        try {
+                            if(rep!=null)
+                                oos.writeObject(rep);
 
-                    rs = BD.executeQuery("select password from login where username = '" + m.getUsername() + "'");
-                    if(rs.next())
-                    {
-                        String pass = rs.getString("password");
-                        if(comparaison)
-                        {...}
-                        else
-                        {...}
+                        } catch (IOException ex) {
+                            Logger.getLogger(RequeteROMP.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                     }
-                    rs.close();
-                } 
-                catch (SQLException ex) 
-                {
-                    Logger.getLogger(ReponseFUCAMP.class.getName()).log(Level.SEVERE, null, ex);
-                }*/
             }
             
             private void treatLogout() 
@@ -194,11 +181,15 @@ public class RequeteROMP implements Requete, Serializable
                     {
                         rep = new ReponseROMP(ReponseROMP.FAILED,"Vous n'êtes pas authentifié");
                         cs.TraceEvenements("serveur#client non authentifié!#" + this.getClass());
-                        return;
+                        //return;
                     }
-                    state = "NON_AUTHENTICATED";
-                    rep = new ReponseROMP(ReponseROMP.SUCCESS, "Déconnexion réussie!");
-                    cs.TraceEvenements("serveur#client déconnecté#" + this.getClass());
+                    else
+                    {
+                        state = "NON_AUTHENTICATED";
+                        rep = new ReponseROMP(ReponseROMP.SUCCESS, "Déconnexion réussie!");
+                        cs.TraceEvenements("serveur#client déconnecté#" + this.getClass());
+                    }
+                    
                     
                     oos.writeObject(rep);
                 } catch (IOException ex) {
@@ -218,7 +209,7 @@ public class RequeteROMP implements Requete, Serializable
                     pst.setString(1, mb.getNomRef());
                     pst.setString(2, mb.getPrenomRef());
                     rs = pst.executeQuery();
-                    if(rs.first())
+                    if(rs.first()) //Si l'utilisateur existe
                     {
                         int idVoyageur = rs.getInt("idVoyageur");
                         //Si le voyageur existe alors on prend son ID car on en aura besoin pour faire la réservation
@@ -326,7 +317,7 @@ public class RequeteROMP implements Requete, Serializable
                     
                     //Récupération des différentes reservations dans la BD
                     ResultSet rs = BD.executeQuery("Select * from reservation");
-                    System.out.println("ListReserv");
+                    //System.out.println("ListReserv");
                      
                     MessageListVector mlv = new MessageListVector();
                     //Ca sera une linkedlist de vector pour avoir plus facile à la mettre dans la jtable

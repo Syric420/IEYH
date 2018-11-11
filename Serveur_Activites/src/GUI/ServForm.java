@@ -38,9 +38,9 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
         labelPort.setText(String.valueOf(port));
         TraceEvenements("serveur#initialisation#" + this.getClass());
         
-        /*BD = new BeanBD();
+        BD = new BeanBD();
         BD.setTypeBD("mysql");
-        BD.connect();*/
+        BD.connect();
     }
 
     /**
@@ -56,6 +56,7 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
         labelPort = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tableEvent = new javax.swing.JTable();
+        buttonStop = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -86,6 +87,16 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
         ));
         jScrollPane1.setViewportView(tableEvent);
 
+        buttonStop.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
+        buttonStop.setText("Stop");
+        buttonStop.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                buttonStopActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -94,19 +105,24 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jScrollPane1)
-                    .addComponent(buttonStart, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 655, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(labelPort)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(buttonStart, javax.swing.GroupLayout.PREFERRED_SIZE, 341, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(buttonStop, javax.swing.GroupLayout.PREFERRED_SIZE, 341, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(buttonStart, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(buttonStart, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(buttonStop, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
@@ -126,6 +142,12 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
         thrs.start();
         buttonStart.setEnabled(false);
     }//GEN-LAST:event_buttonStartActionPerformed
+
+    private void buttonStopActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_buttonStopActionPerformed
+    {//GEN-HEADEREND:event_buttonStopActionPerformed
+        System.exit(0);
+        //plus tard - prévenir les clients de la femeture du serveur
+    }//GEN-LAST:event_buttonStopActionPerformed
 
     /**
      * @param args the command line arguments
@@ -178,6 +200,7 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonStart;
+    private javax.swing.JButton buttonStop;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel labelPort;

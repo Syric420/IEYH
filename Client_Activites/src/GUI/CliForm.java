@@ -8,17 +8,14 @@ package GUI;
 import Message.*;
 import Reponse.ReponseFUCAMP;
 import Requete.RequeteFUCAMP;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.DefaultListModel;
-import javax.swing.JList;
+import java.util.LinkedList;
+import java.util.Vector;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -31,6 +28,7 @@ public class CliForm extends javax.swing.JFrame
     Socket socket;
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
+    DefaultTableModel dtm;
     
     /**
      * Creates new form CliForm
@@ -47,7 +45,7 @@ public class CliForm extends javax.swing.JFrame
         port = Integer.parseInt(portProp);
         
         login();
-        buildJList(this);
+        dtm = (DefaultTableModel)tableAct.getModel();
     }
     
     private void login()
@@ -89,29 +87,41 @@ public class CliForm extends javax.swing.JFrame
         }
         catch (IOException | ClassNotFoundException ex) 
         {
-            Logger.getLogger(CliForm.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(rootPane, "Exception: " + ex.getMessage());
             return;
         }
     }
     
-    private void buildJList(CliForm aThis)
+    private void logout()
     {
-        DefaultListModel dlm = new DefaultListModel();
-        dlm.addElement("Ski 3 jours"); dlm.addElement("Plongée 1 jour"); dlm.addElement("Promenade 1 jour"); dlm.addElement("Camping 2 jours");
-        listActivites.setModel(dlm);
-        
-        //pour la détection d'un double clic
-        listActivites.addMouseListener(new MouseAdapter() 
+        if(socket==null || socket.isClosed())
+            return;
+        try
         {
-            public void mouseClicked(MouseEvent evt) 
-            {
-                JList list = (JList)evt.getSource();
-                if(evt.getClickCount() == 2) 
-                {
-                    System.out.println(listActivites.getSelectedValue());
-                } 
-            }
-        });
+            oos.writeObject(new RequeteFUCAMP(RequeteFUCAMP.REQUEST_LOGOUT));
+
+            ReponseFUCAMP rep = (ReponseFUCAMP) ois.readObject();
+
+            if(rep.getCode() == ReponseFUCAMP.SUCCESS)
+                JOptionPane.showMessageDialog(rootPane, ((MessageSimple)rep.getMessage()).getMessage());
+
+            oos.close();
+            ois.close();
+            socket.close();
+
+            System.exit(0);
+        } 
+        catch (IOException | ClassNotFoundException ex) 
+        {
+            JOptionPane.showMessageDialog(rootPane, "Exception: " + ex.getMessage());
+        }
+    }
+    
+    private void buildJTable(LinkedList<Vector> listActs)
+    {
+        dtm.setRowCount(0);
+        for(int i=0;i<listActs.size();i++)
+            dtm.addRow(listActs.get(i));
     }
     
     /**
@@ -122,24 +132,173 @@ public class CliForm extends javax.swing.JFrame
     private void initComponents()
     {
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         labelWelcome = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        listActivites = new javax.swing.JList<>();
         buttonLogout = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tableAct = new javax.swing.JTable();
+        buttonDesist = new javax.swing.JButton();
+        jPanel3 = new javax.swing.JPanel();
+        jLabel5 = new javax.swing.JLabel();
+        radio1Jour = new javax.swing.JRadioButton();
+        radioNJour = new javax.swing.JRadioButton();
+        radioRecherche = new javax.swing.JRadioButton();
+        comboRecherche = new javax.swing.JComboBox<>();
+        fieldRecherche = new javax.swing.JTextField();
+        buttonRecherche = new javax.swing.JButton();
+        buttonInscription = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter()
+        {
+            public void windowClosing(java.awt.event.WindowEvent evt)
+            {
+                formWindowClosing(evt);
+            }
+        });
 
-        labelWelcome.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        labelWelcome.setFont(new java.awt.Font("Calibri", 1, 14)); // NOI18N
         labelWelcome.setText("labelWelcome");
 
-        jScrollPane1.setViewportView(listActivites);
-
+        buttonLogout.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         buttonLogout.setText("Logout");
         buttonLogout.addActionListener(new java.awt.event.ActionListener()
         {
             public void actionPerformed(java.awt.event.ActionEvent evt)
             {
                 buttonLogoutActionPerformed(evt);
+            }
+        });
+
+        tableAct.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        tableAct.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][]
+            {
+
+            },
+            new String []
+            {
+                "idActivite", "type", "nbParticipants", "nbMaxParticipants", "DuréeMin", "DuréeJour", "PrixHTVA"
+            }
+        ));
+        jScrollPane2.setViewportView(tableAct);
+
+        buttonDesist.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        buttonDesist.setText("Désistement");
+        buttonDesist.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                buttonDesistActionPerformed(evt);
+            }
+        });
+
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Action"));
+        jPanel3.setToolTipText("");
+        jPanel3.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+
+        jLabel5.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        jLabel5.setText("Sélection de la durée (en jours) pour les activités:");
+
+        buttonGroup1.add(radio1Jour);
+        radio1Jour.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        radio1Jour.setText("1 jour");
+        radio1Jour.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                radio1JourActionPerformed(evt);
+            }
+        });
+
+        buttonGroup1.add(radioNJour);
+        radioNJour.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        radioNJour.setText("plusieurs jours");
+        radioNJour.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                radioNJourActionPerformed(evt);
+            }
+        });
+
+        buttonGroup1.add(radioRecherche);
+        radioRecherche.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        radioRecherche.setText("Recherche");
+        radioRecherche.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                radioRechercheActionPerformed(evt);
+            }
+        });
+
+        comboRecherche.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Client", "Date" }));
+        comboRecherche.setEnabled(false);
+
+        fieldRecherche.setEnabled(false);
+
+        buttonRecherche.setText("Recherche");
+        buttonRecherche.setEnabled(false);
+        buttonRecherche.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                buttonRechercheActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(117, 117, 117)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addGap(34, 34, 34)
+                                .addComponent(radio1Jour)
+                                .addGap(36, 36, 36)
+                                .addComponent(radioNJour))))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(116, 116, 116)
+                        .addComponent(radioRecherche)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(comboRecherche, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(fieldRecherche, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(buttonRecherche)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel5)
+                .addGap(18, 18, 18)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(radio1Jour)
+                    .addComponent(radioNJour))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(radioRecherche)
+                    .addComponent(comboRecherche, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(fieldRecherche, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(buttonRecherche))
+                .addContainerGap(16, Short.MAX_VALUE))
+        );
+
+        buttonInscription.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        buttonInscription.setText("Inscription");
+        buttonInscription.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                buttonInscriptionActionPerformed(evt);
             }
         });
 
@@ -150,20 +309,37 @@ public class CliForm extends javax.swing.JFrame
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(labelWelcome)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(buttonLogout))
-                .addContainerGap(225, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(labelWelcome)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(buttonInscription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(buttonDesist, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(buttonLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 101, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 702, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(labelWelcome)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 105, Short.MAX_VALUE)
-                .addComponent(buttonLogout)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(labelWelcome)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(buttonInscription, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(17, 17, 17)
+                        .addComponent(buttonDesist, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(17, 17, 17)
+                        .addComponent(buttonLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 147, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -172,30 +348,209 @@ public class CliForm extends javax.swing.JFrame
 
     private void buttonLogoutActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_buttonLogoutActionPerformed
     {//GEN-HEADEREND:event_buttonLogoutActionPerformed
-        if(socket==null || socket.isClosed())
-                return;
-        try
-        {
-            oos.writeObject(new RequeteFUCAMP(RequeteFUCAMP.REQUEST_LOGOUT));
-            ReponseFUCAMP rep = (ReponseFUCAMP) ois.readObject();
-            
-            if(rep.getCode() == ReponseFUCAMP.SUCCESS)
-                JOptionPane.showMessageDialog(rootPane, ((MessageSimple)rep.getMessage()).getMessage());
-            
-            oos.close();
-            ois.close();
-            socket.close();
-            System.exit(0);
-        } 
-        catch (IOException ex) 
-        {
-            Logger.getLogger(CliForm.class.getName()).log(Level.SEVERE, null, ex);
-        } 
-        catch (ClassNotFoundException ex) 
-        {
-            Logger.getLogger(CliForm.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        logout();
     }//GEN-LAST:event_buttonLogoutActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt)//GEN-FIRST:event_formWindowClosing
+    {//GEN-HEADEREND:event_formWindowClosing
+        logout();
+    }//GEN-LAST:event_formWindowClosing
+
+    private void buttonInscriptionActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_buttonInscriptionActionPerformed
+    {//GEN-HEADEREND:event_buttonInscriptionActionPerformed
+        if(tableAct.getSelectedRowCount()==1) //vérifie si une ligne est sélectionnée dans la table
+        {
+            try
+            {
+                RequeteFUCAMP req = null;
+                int nbParticipants = (int) dtm.getValueAt(tableAct.getSelectedRow(), 2); //récupère le nb de part de l'activité sélectionné
+                int nbParticipantsMax = (int) dtm.getValueAt(tableAct.getSelectedRow(), 3); //récupère le nb de part max de l'activité sélectionné
+
+                if(radio1Jour.isSelected()) //si bouton radio 1 jour sélectionné
+                {
+                    if(nbParticipants < nbParticipantsMax) //vérifie si activité n'est pas full
+                    {
+                        Inscription1Jour i1j = new Inscription1Jour(this, true);
+                        i1j.setVisible(true);
+                        if(!i1j.isDisplayable()) //si clic sur croix
+                            return;
+
+                        req = new RequeteFUCAMP(RequeteFUCAMP.REQUEST_ACT, 
+                                                new MessageInscription("1",                                                            //indice
+                                                                       String.valueOf(dtm.getValueAt(tableAct.getSelectedRow(), 0)),   //id
+                                                                       String.valueOf(dtm.getValueAt(tableAct.getSelectedRow(), 6)),   //prix
+                                                                       i1j.getDate(),                                                  //date
+                                                                       i1j.getClient(),                                                //nom client
+                                                                       String.valueOf(dtm.getValueAt(tableAct.getSelectedRow(), 5)))); //durée jour
+                    }
+                    else
+                        JOptionPane.showMessageDialog(rootPane, "L'activité est full");
+                }
+                else //si bouton radio plusieurs jour sélectionné
+                {
+                    if(nbParticipants < nbParticipantsMax) //vérifie si activité n'est pas full
+                    {
+                        InscriptionNJour inj = new InscriptionNJour(this, true);
+                        inj.setVisible(true);
+                        if(!inj.isDisplayable()) //si clic sur croix
+                            return;
+
+                        req = new RequeteFUCAMP(RequeteFUCAMP.REQUEST_ACT, 
+                                                new MessageInscription("N",                                                            //indice
+                                                                       String.valueOf(dtm.getValueAt(tableAct.getSelectedRow(), 0)),   //id
+                                                                       String.valueOf(dtm.getValueAt(tableAct.getSelectedRow(), 6)),   //prix
+                                                                       inj.getDate(),                                                  //date
+                                                                       inj.getClient(),                                                //nom client
+                                                                       String.valueOf(dtm.getValueAt(tableAct.getSelectedRow(), 5)))); //durée jour
+                    }
+                    else
+                        JOptionPane.showMessageDialog(rootPane, "L'activité est full");
+                }
+
+                oos.writeObject(req); //on stocke la requete sur le flux output
+
+                ReponseFUCAMP rep = (ReponseFUCAMP)ois.readObject(); //on récupère la réponse du flux input
+                JOptionPane.showMessageDialog(rootPane,((MessageSimple)rep.getMessage()).getMessage()); //affiche message succès
+            }
+            catch (IOException | ClassNotFoundException ex) 
+            {
+                JOptionPane.showMessageDialog(rootPane, "Exception: " + ex.getMessage());
+            }
+        }
+        else //si aucune ou plusieurs lignes ont été sélectionnées
+            JOptionPane.showMessageDialog(rootPane, "Il faut choisir une seule activité!");
+    }//GEN-LAST:event_buttonInscriptionActionPerformed
+
+    private void buttonDesistActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_buttonDesistActionPerformed
+    {//GEN-HEADEREND:event_buttonDesistActionPerformed
+        if(tableAct.getSelectedRowCount()==1) //vérifie si une ligne est sélectionnée dans la table
+        {
+            try
+            {
+                int nbParticipants = (int) dtm.getValueAt(tableAct.getSelectedRow(), 2); //récupère le nb de part de l'activité sélectionné
+
+                if(nbParticipants != 0) //vérifie si activité a des participants
+                {
+                    DesistementActivite da = new DesistementActivite(this, true);
+                    da.setVisible(true);
+                    if(!da.isDisplayable()) //si clic sur croix
+                        return;
+
+                    //construction du message qu'on envoi: id activité + prix activité + date souhaité + nom client
+                    /*String message = dtm.getValueAt(tableAct.getSelectedRow(), 0) + "#" + //id
+                                     da.getDate() + "#" +                                 //date
+                                     da.getClient();                                      //nom client
+                    System.out.println("messageD= " + message);*/
+                    RequeteFUCAMP req = new RequeteFUCAMP(RequeteFUCAMP.REQUEST_DESIST, 
+                                                new MessageDesistement(String.valueOf(dtm.getValueAt(tableAct.getSelectedRow(), 0)), //id
+                                                                       da.getDate(),                                                 //prix
+                                                                       da.getClient()));                                             //durée jour
+                    oos.writeObject(req); //on stocke la requete sur le flux output
+
+                    ReponseFUCAMP rep = (ReponseFUCAMP)ois.readObject(); //on récupère la réponse du flux input
+                    JOptionPane.showMessageDialog(rootPane, ((MessageSimple)rep.getMessage()).getMessage()); //affiche message succès
+                }
+                else
+                    JOptionPane.showMessageDialog(rootPane, "L'activité n'a aucun participants");
+            }
+            catch (IOException | ClassNotFoundException ex) 
+            {
+                JOptionPane.showMessageDialog(rootPane, "Exception: " + ex.getMessage());
+            }
+        }
+        else //si aucune ou plusieurs lignes ont été sélectionnées
+            JOptionPane.showMessageDialog(rootPane, "Il faut choisir une seule activité!");
+    }//GEN-LAST:event_buttonDesistActionPerformed
+
+    private void radioNJourActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_radioNJourActionPerformed
+    {//GEN-HEADEREND:event_radioNJourActionPerformed
+        comboRecherche.setEnabled(false);
+        fieldRecherche.setEnabled(false);
+        buttonRecherche.setEnabled(false);
+        
+        if(radioNJour.isSelected())
+        {
+            try
+            {
+                LinkedList<Vector> listActs = new LinkedList<Vector>();
+
+                RequeteFUCAMP req = new RequeteFUCAMP(RequeteFUCAMP.REQUEST_LIST_ACT, new MessageSimple("N"));
+                oos.writeObject(req); //on stocke la requete sur le flux output
+
+                ReponseFUCAMP rep = (ReponseFUCAMP)ois.readObject(); //on récupère la réponse du flux input
+                if(rep.getCode() == ReponseFUCAMP.SUCCESS)
+                    listActs = ((MessageListActs)rep.getMessage()).getList(); //on récupère la liste
+
+                buildJTable(listActs);
+            }
+            catch (IOException | ClassNotFoundException ex)
+            {
+                JOptionPane.showMessageDialog(rootPane, "Exception: " + ex.getMessage());
+            }
+        }
+    }//GEN-LAST:event_radioNJourActionPerformed
+
+    private void radio1JourActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_radio1JourActionPerformed
+    {//GEN-HEADEREND:event_radio1JourActionPerformed
+        comboRecherche.setEnabled(false);
+        fieldRecherche.setEnabled(false);
+        buttonRecherche.setEnabled(false);
+        
+        if(radio1Jour.isSelected())
+        {
+            try
+            {
+                LinkedList<Vector> listActs = new LinkedList<Vector>();
+
+                RequeteFUCAMP req = new RequeteFUCAMP(RequeteFUCAMP.REQUEST_LIST_ACT, new MessageSimple("1"));
+                oos.writeObject(req); //on stocke la requete sur le flux output
+
+                ReponseFUCAMP rep = (ReponseFUCAMP)ois.readObject(); //on récupère la réponse du flux input
+                if(rep.getCode() == ReponseFUCAMP.SUCCESS)
+                    listActs = ((MessageListActs)rep.getMessage()).getList(); //on récupère la liste
+
+                buildJTable(listActs);
+            }
+            catch (IOException | ClassNotFoundException ex)
+            {
+                JOptionPane.showMessageDialog(rootPane, "Exception: " + ex.getMessage());
+            }
+        }
+    }//GEN-LAST:event_radio1JourActionPerformed
+
+    private void radioRechercheActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_radioRechercheActionPerformed
+    {//GEN-HEADEREND:event_radioRechercheActionPerformed
+        if(radioRecherche.isSelected())
+        {
+            comboRecherche.setEnabled(true);
+            fieldRecherche.setEnabled(true);
+            buttonRecherche.setEnabled(true);
+        }
+    }//GEN-LAST:event_radioRechercheActionPerformed
+
+    private void buttonRechercheActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_buttonRechercheActionPerformed
+    {//GEN-HEADEREND:event_buttonRechercheActionPerformed
+        if(!fieldRecherche.getText().equals(""))
+        {
+            try
+            {
+                LinkedList<Vector> listActs = new LinkedList<Vector>();
+                
+                RequeteFUCAMP req = new RequeteFUCAMP(RequeteFUCAMP.REQUEST_SEARCH, new MessageRecherche((String)comboRecherche.getSelectedItem(), fieldRecherche.getText())); //envoi type req + message
+                oos.writeObject(req); //on stocke la requete sur le flux output
+
+                ReponseFUCAMP rep = (ReponseFUCAMP)ois.readObject(); //on récupère la réponse du flux input
+                if(rep.getCode() == ReponseFUCAMP.SUCCESS)
+                    listActs = ((MessageListActs)rep.getMessage()).getList(); //on récupère la liste
+
+                buildJTable(listActs);
+            }
+            catch (IOException | ClassNotFoundException ex) 
+            {
+                JOptionPane.showMessageDialog(rootPane, "Exception: " + ex.getMessage());
+            }
+        }
+    }//GEN-LAST:event_buttonRechercheActionPerformed
 
     /**
      * @param args the command line arguments
@@ -247,9 +602,20 @@ public class CliForm extends javax.swing.JFrame
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton buttonDesist;
+    private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.JButton buttonInscription;
     private javax.swing.JButton buttonLogout;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton buttonRecherche;
+    private javax.swing.JComboBox<String> comboRecherche;
+    private javax.swing.JTextField fieldRecherche;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel labelWelcome;
-    private javax.swing.JList<String> listActivites;
+    private javax.swing.JRadioButton radio1Jour;
+    private javax.swing.JRadioButton radioNJour;
+    private javax.swing.JRadioButton radioRecherche;
+    private javax.swing.JTable tableAct;
     // End of variables declaration//GEN-END:variables
 }

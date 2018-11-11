@@ -21,7 +21,7 @@ public class Client_Activites
         try
         {
             Properties prop = new Properties();
-            fis = new FileInputStream("C:\\Users\\vhoog\\Documents\\Projets ecole\\IEYH\\Serveur_Activites\\src\\serveur_activites\\serveur_activites.properties");
+            fis = new FileInputStream("..\\Serveur_Activites\\src\\serveur_activites\\serveur_activites.properties");
 
             prop.load(fis);
 

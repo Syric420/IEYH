@@ -55,7 +55,7 @@ public class ThreadSer extends Thread
             {
                 guiApplication.TraceEvenements("serveur#Serveur en attente#" + this.getClass());
                 CSocket = SSocket.accept();
-                guiApplication.TraceEvenements(CSocket.getRemoteSocketAddress().toString() + "#Client connecté#" + this.getClass());
+                guiApplication.TraceEvenements("client" + CSocket.getRemoteSocketAddress().toString() + "#Client connecté#" + this.getClass());
             }
             catch (IOException e)
             {
