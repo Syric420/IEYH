@@ -64,14 +64,13 @@ public class MainServlet extends HttpServlet {
                     String user = (String)request.getParameter("user");
                     String pwd = (String)request.getParameter("password");
                     String newUser = (String)request.getParameter("newUser");
-                    
+                    pst = BD.getCon().prepareStatement("select password from login where user = ?");
+                    pst.setString(1, user);
                     if(newUser == null)
                     {   
 
                         //La case nouvel utilisateur est décoché
-                        pst = BD.getCon().prepareStatement("select password from login where user = ?");
-
-                        pst.setString(1, user);
+                        
 
                         System.out.println("Requete SQL = "+pst.toString());
                         rs = pst.executeQuery();
@@ -106,8 +105,31 @@ public class MainServlet extends HttpServlet {
                     else
                     {
                         //La case nouvel utilisateur est coché
-
+                        //Il faut vérifier si l'utilisateur existe déjà au cas ou il aurait coché sans faire exprès
+                        sc.log("La case nouvel utilisateur est cochée");
+                        
+                        rs = pst.executeQuery();
+                        if(!rs.first())
+                        {
+                            sc.log("l'utlisateur n'existe pas on le crée");
+                            //Si l'utlisateur n'existe pas on le crée
+                            pst = BD.getCon().prepareStatement("INSERT INTO loginclient ('user', 'password') VALUES (?, ?)");
+                            System.out.println("Requete SQL = "+pst.toString());
+                            pst.setString(1, user);
+                            pst.setString(2, pwd);
+                            pst.executeUpdate();
+                        }
+                        else
+                        {
+                            //L'utilisateur existe déjà donc message d'erreur
+                            msgErreur = "Nom d'utilisateur déjà existant - veuillez réessayer";
+                            request.setAttribute("msgErreur", msgErreur);
+                            sc.log("Nom d'utilisateur déjà existant");
+                            RequestDispatcher rd = sc.getRequestDispatcher("/JspLogin.jsp");
+                            rd.forward(request, response);
+                        }
                     }
+                    
                         /*System.out.println(user +" : "+pwd);
                         System.out.println(newUser);*/
 
