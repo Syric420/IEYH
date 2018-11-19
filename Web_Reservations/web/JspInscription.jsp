@@ -16,7 +16,7 @@
         <form action="MainServlet">
             <p>Nom : <input type="text" name="Nom" value="" required="" /></p>
             <p>Prenom : <input type="text" name="Prenom" value="" required=""/></p>
-            <p>Nationalité : <input type="text" name="Nationalité" value="" required=""/></p>
+            <p>Nationalité : <input type="text" name="Nationalite" value="" required=""/></p>
             <p>Date de naissance : <input type="text" name="Date" value="" required=""/> exemple : 01/02/1978</p>
             <p>Email : <input type="text" name="Email" value="" required=""/></p>
             <p>Adresse : <input type="text" name="Adresse" value="" required=""/></p>

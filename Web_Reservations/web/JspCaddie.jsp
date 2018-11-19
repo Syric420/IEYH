@@ -46,7 +46,8 @@
             </thead>
             <tbody>
                 
-                    <% while(rs.next())//Tant qu'il y a des tuples on les affiche
+                    <% rowCount = 0;
+                        while(rs.next())//Tant qu'il y a des tuples on les affiche
                     {
                       %><tr>
                             <td> <%=rs.getInt(1)%></td>
@@ -54,7 +55,7 @@
                             <td> <%=rs.getString(3)%></td>
                             <td> <%=rs.getFloat(4)%></td>
                         </tr>
-                    <%}%> 
+                    <% rowCount++;}%> 
                 
             </tbody>
         </table>
@@ -63,13 +64,13 @@
                     <form method="POST" action="MainServlet">
                         
                         <p> Numéro de chambre : <select name="numChambre">
-                            <% for(int i=1; i<rowCount; i++)
+                            <% for(int i=1; i<rowCount+1; i++)
                             {//On ajoute les différentes options donc ici une liste de nombre correspondants au numéro de chambre
                             %><option><%=i%></option>
                             <%}%>
                         </select> </p>
-                        <p> Date de début : <input type="text" name="dateDebut" value="" /> exemple : 01/02/1978</p> 
-                        <p> Date de fin : <input type="text" name="dateFin" value="" /> exemple : 01/02/1978</p>  
+                        <p> Date de début : <input type="text" name="dateDebut" value="" required=""/> exemple : 01/02/1978</p> 
+                        <p> Date de fin : <input type="text" name="dateFin" value="" required=""/> exemple : 01/02/1978</p>  
                         <input type="submit" value="Réserver" name="btnReserver" />
                         <input type="hidden" name="action" value="reserverChambre">
                     </form>

@@ -5,6 +5,7 @@
  */
 package Servlet;
 
+import Classes.LinkedListReservation;
 import Database.facility.BeanBD;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -69,7 +70,7 @@ public class MainServlet extends HttpServlet {
                     String user = (String)request.getParameter("user");
                     String pwd = (String)request.getParameter("password");
                     String newUser = (String)request.getParameter("newUser");
-                    pst = BD.getCon().prepareStatement("select password from loginclient where user = ?");
+                    pst = BD.getCon().prepareStatement("select * from loginclient where user = ?");
                     HttpSession session = request.getSession(true);
                     if(!user.equals("") && !pwd.equals(""))
                     {
@@ -87,8 +88,9 @@ public class MainServlet extends HttpServlet {
                                 //System.out.println("mdp formulaire = "+pwd);
                                 if(mdp.equals(pwd))
                                 {
+                                    int id = rs.getInt("refVoyageur");
                                     //Les deux mots de passe sont identiques on crée la session
-                                    session.setAttribute("user", user);session.setAttribute("pwd", pwd);
+                                    session.setAttribute("user", user);session.setAttribute("pwd", pwd);session.setAttribute("identifiant", id);
                                     this.setAuthenticated(request, true);//On signifie qu'il est identifié
                                     sc.log("Login réussi");
                                     RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
@@ -151,8 +153,10 @@ public class MainServlet extends HttpServlet {
                 break;
             case "init":
                 sc.log("INIT");
+                
                 if(isAuthenticated(request))
                 {
+                    HttpSession session = request.getSession(true);
                     //on regarde si l'utilisateur est bien connecté
                     sc.log("Appuie sur le bouton Caddie");
                     RequestDispatcher rd = sc.getRequestDispatcher("/JspCaddie.jsp");
@@ -167,9 +171,40 @@ public class MainServlet extends HttpServlet {
                     rd.forward(request, response);
                 }
                 break;
-            case "initpayer":
+            case "initAnnuler":
                 if(isAuthenticated(request))
                 {
+                    HttpSession session = request.getSession(true);
+                    //on regarde si l'utilisateur est bien connecté
+                    sc.log("Appuie sur le bouton int Annuler");
+                    int idReservation = Integer.parseInt(request.getParameter("inputNumReservation"));
+                    
+                    try {
+                        pst = BD.getCon().prepareStatement("DELETE FROM reservation WHERE idReservation = ? AND idReferent = ?");
+                        pst.setInt(1, idReservation);
+                        pst.setInt(2, (int)session.getAttribute("identifiant"));
+                        pst.executeUpdate();
+                    } catch (SQLException ex) {
+
+                        
+                    }
+                    RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
+                        rd.forward(request, response);
+                }
+                else
+                {
+                    //s'il est pas connecté alors on le renvoie au login
+                    msgErreur = "Erreur - veuillez vous connecter";
+                    request.setAttribute("msgErreur", msgErreur);
+                    RequestDispatcher rd = sc.getRequestDispatcher("/JspLogin.jsp");
+                    rd.forward(request, response);
+                }
+                break;
+            case "initpayer":
+                
+                if(isAuthenticated(request))
+                {
+                    HttpSession session = request.getSession(true);
                     //on regarde si l'utilisateur est bien connecté
                     sc.log("Appuie sur le bouton Payer");
                     /*RequestDispatcher rd = sc.getRequestDispatcher("/.jsp");
@@ -187,13 +222,112 @@ public class MainServlet extends HttpServlet {
             case "reserverChambre":
                 if(isAuthenticated(request))
                 {
-                    sc.log("Appuie sur le bouton Reserver chambre");
-                    //On récupère les différents données donc numéro de chambre + la date début et de fin
-                    String user = (String)request.getParameter("dateDebut");
-                    String pwd = (String)request.getParameter("dateFin");
-                    int numChambre = Integer.parseInt(request.getParameter("numChambre"));
-                    System.out.println(user);System.out.println(pwd);System.out.println(numChambre);
-                    
+                    try {
+                        sc.log("Appuie sur le bouton Reserver chambre");
+                        //On récupère les différents données donc numéro de chambre + la date début et de fin
+                        String dateDebut = (String)request.getParameter("dateDebut");
+                        String dateFin = (String)request.getParameter("dateFin");
+                        int numChambre = Integer.parseInt(request.getParameter("numChambre"));
+
+                        /*Il faut regarder si la chambre est dispo à cette date là
+                        +
+                        Il faut regarder si le client n'a pas déjà réservé une autre chambre à cette date là (dans l'énoncé
+                        =on ne perdra pas de vue qu'un même voyageur ne peut pas être à deux endroits différents au même moment*/
+
+                        pst = BD.getCon().prepareStatement("Select * from reservation WHERE refChambre = ? AND ((dateDebut between ? AND ?) OR (dateFin between ? AND ?))");
+                       
+                        //conversion pour les dates de string à sql.date
+                        SimpleDateFormat sdf1 = new SimpleDateFormat("dd/MM/yyyy");
+                        java.util.Date date = sdf1.parse(dateDebut);
+                        java.sql.Date dateDebutSql = new java.sql.Date(date.getTime()); 
+                        
+                        date = sdf1.parse(dateFin);
+                        java.sql.Date dateFinSql = new java.sql.Date(date.getTime()); 
+                        
+                        pst.setInt(1, numChambre);
+                        pst.setDate(2, dateDebutSql);
+                        pst.setDate(3, dateFinSql);
+                        pst.setDate(4, dateDebutSql);
+                        pst.setDate(5, dateFinSql);
+                        System.out.println(pst.toString());
+                        
+                        rs = pst.executeQuery();
+                        
+                        if(!rs.first())
+                        {
+                            //Si il y a aucune réservation à cette date là pour cette chambre
+                            //Il faut vérifier si l'utilisateur a déjà reservé une chambre pour cette date là
+                            
+                            HttpSession session = request.getSession(true);
+                            
+                            pst = BD.getCon().prepareStatement("Select * from reservation WHERE idReferent = ? AND ((dateDebut between ? AND ?) OR (dateFin between ? AND ?))");
+                            int id = (int)session.getAttribute("identifiant");
+                            pst.setInt(1, id);
+                            pst.setDate(2, dateDebutSql);
+                            pst.setDate(3, dateFinSql);
+                            pst.setDate(4, dateDebutSql);
+                            pst.setDate(5, dateFinSql);
+                            
+                            rs = pst.executeQuery();
+                            
+                            if(!rs.first())
+                            {
+                               //Si aucune réservation faite par ce client à cette date là il faut enregistrer sa réservation
+                                sc.log("Le champ est libre il faut enregistrer sa réservation mais mettre qu'il l'a pas encore payé");
+                                //J'ai besoin du prix de la chambre pour calculer le prix de la réservation
+                                pst = BD.getCon().prepareStatement("Select prixHTVA FROM chambre WHERE idChambre = ?");
+                                pst.setInt(1, numChambre);
+                                rs = pst.executeQuery();
+                                
+                                rs.next();
+                                float prixHTVA = rs.getFloat("prixHTVA");
+                                pst = BD.getCon().prepareStatement("INSERT INTO reservation" + 
+                                "(typeReservation, dateDebut, dateFin, boolPaye, refChambre, idReferent, prixNet)"
+                                + "VALUES(?, ?, ?, ?, ?, ?, ?)");
+                                pst.setString(1, "Chambre");
+                                pst.setDate(2, dateDebutSql);
+                                pst.setDate(3, dateFinSql);
+                                pst.setBoolean(4, false);
+                                pst.setInt(5, numChambre);
+                                pst.setInt(6, id);
+                                
+                                //Nombre de jours entre deux dates
+                                long nbJoursMili = dateFinSql.getTime() - dateDebutSql.getTime();
+                                int nbJours = (int) nbJoursMili/86400000;
+                                //On calcule le prix grace au nombre de jours * prix HTVA
+                                
+                                pst.setFloat(7, prixHTVA*nbJours);
+                                pst.executeUpdate();
+
+                                //La réservation est dans la BD maintenant
+                                
+                                msgErreur = "Réservation ajoutée au caddie";//C'est pas un message d'erreur ici mais bon flemme de changer le nom de variable
+                                request.setAttribute("msgErreur", msgErreur);
+                                RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
+                                rd.forward(request, response);
+                            }
+                            else
+                            {
+                                //réservation déjà faite par ce client à cette date là il faut afficher un message d'erreur
+                                
+                                msgErreur = "Problème de réservation - vous avez déjà reservé une chambre pendant ces dates";
+                                request.setAttribute("msgErreur", msgErreur);
+                                RequestDispatcher rd = sc.getRequestDispatcher("/JspCaddie.jsp");
+                                rd.forward(request, response);
+                            }
+                        }
+                        else
+                        {
+                            //il y a une réservation à cette date là pour cette chambre donc afficher une message d'erreur
+                            msgErreur = "Problème de réservation - la chambre est déjà prise pour cette date";
+                            request.setAttribute("msgErreur", msgErreur);
+                            RequestDispatcher rd = sc.getRequestDispatcher("/JspCaddie.jsp");
+                            rd.forward(request, response);
+                        }
+                        
+                    } catch (SQLException | ParseException ex) {
+                        Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
                 else
                 {
@@ -208,15 +342,6 @@ public class MainServlet extends HttpServlet {
             case "inscription":
                 sc.log("Appuie sur le bouton inscription");
                 try {
-                    //On crée l'utilisateur
-                    pst = BD.getCon().prepareStatement("INSERT INTO loginclient (user, password) VALUES (?, ?)");
-                    HttpSession session = request.getSession(true);
-
-                    pst.setString(1, (String)session.getAttribute("user"));
-                    pst.setString(2, (String)session.getAttribute("pwd"));
-                    System.out.println("Requete SQL = "+pst.toString());
-                    pst.executeUpdate();
-                    
                     //On regarde si l'adresse existe déjà (exemple un membre de la même famille) du coup on recrée pas la même adresse
                     String adresse = (String)request.getParameter("Adresse");
                     int numero = Integer.parseInt(request.getParameter("Numero"));
@@ -237,14 +362,14 @@ public class MainServlet extends HttpServlet {
                         pst.setInt(2, numero);
                         pst.setInt(3, codePostal);
                         pst.setString(4, commune);
-                        System.out.println("Requete SQL = "+pst.toString());
+                        //System.out.println("Requete SQL = "+pst.toString());
                         pst.executeUpdate();
                         
                         //Il faut absolument l'id de l'adresse pour pouvoir l'associer au voyageur correspondant
                         pst = BD.getCon().prepareStatement("Select * from adresse WHERE (nomRue = ? AND numero = ?)");
                         pst.setString(1, adresse);
                         pst.setInt(2, numero);
-                        System.out.println("Requete SQL = "+pst.toString());
+                        //System.out.println("Requete SQL = "+pst.toString());
                         rs = pst.executeQuery();
                         rs.next();
                         numRowInserted = rs.getInt("idAdresse");//on récupère le numéro idAdresse
@@ -281,6 +406,26 @@ public class MainServlet extends HttpServlet {
                     RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
                     rd.forward(request, response);
                     //-------------------
+                    
+                    //On crée l'utilisateur
+                    pst = BD.getCon().prepareStatement("Select * from voyageur WHERE (nom = ? AND prenom = ?)");
+                    pst.setString(1, nom);
+                    pst.setString(2, prenom);
+                    rs = pst.executeQuery();
+                    rs.next();
+                    
+                    int refVoyageur = rs.getInt(1);//On récupère son ID
+                    pst = BD.getCon().prepareStatement("INSERT INTO loginclient (user, password, refVoyageur) VALUES (?, ?, ?)");
+                    
+                    HttpSession session = request.getSession(true);
+                    pst.setString(1, (String)session.getAttribute("user"));
+                    pst.setString(2, (String)session.getAttribute("pwd"));
+                    session.setAttribute("identifiant", refVoyageur);//On le met dans l'objet session 
+                    pst.setInt(3, refVoyageur);
+                    System.out.println("Requete SQL = "+pst.toString());
+                    pst.executeUpdate();
+                    
+                    //----------------------
                 } catch (SQLException | ParseException ex) {
                     Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
                     setAuthenticated(request, false);
