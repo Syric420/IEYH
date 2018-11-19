@@ -204,11 +204,76 @@ public class MainServlet extends HttpServlet {
                 
                 if(isAuthenticated(request))
                 {
+                    try {
+                        HttpSession session = request.getSession(true);
+                        //on regarde si l'utilisateur est bien connecté
+                        sc.log("Appuie sur le bouton Payer");
+
+                        //Il faut parcourir toutes les réservations et additionner le prix
+                        pst = BD.getCon().prepareStatement("Select prixNet from reservation where idReferent = ? AND boolPaye = 0");
+                        session = request.getSession(true);
+                        pst.setInt(1, (int)session.getAttribute("identifiant"));
+                        rs = pst.executeQuery();
+                        float totalAPayer=0;
+                        while(rs.next())
+                        {
+                            totalAPayer += rs.getFloat(1);
+                            System.out.println(totalAPayer);
+                        }
+                        
+                        session.setAttribute("totalAPayer", totalAPayer);
+                        
+                        
+                        RequestDispatcher rd = sc.getRequestDispatcher("/JspPay.jsp");
+                        rd.forward(request, response);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                else
+                {
+                    //s'il est pas connecté alors on le renvoie au login
+                    msgErreur = "Erreur - veuillez vous connecter";
+                    request.setAttribute("msgErreur", msgErreur);
+                    RequestDispatcher rd = sc.getRequestDispatcher("/JspLogin.jsp");
+                    rd.forward(request, response);
+                }
+                break;
+            case "payPayer":
+                 if(isAuthenticated(request))
+                {
+                    try {
+                        HttpSession session = request.getSession(true);
+                        //on regarde si l'utilisateur est bien connecté
+
+                        //Il faut mettre toutes les réservations sur 1 à payer pour ce client
+                        pst = BD.getCon().prepareStatement("UPDATE reservation SET boolPaye = '1' WHERE idReferent = ? AND boolPaye = 0");
+                        pst.setInt(1, (int)session.getAttribute("identifiant"));
+
+                        pst.executeUpdate();
+
+                        RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
+                        rd.forward(request, response);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                else
+                {
+                    //s'il est pas connecté alors on le renvoie au login
+                    msgErreur = "Erreur - veuillez vous connecter";
+                    request.setAttribute("msgErreur", msgErreur);
+                    RequestDispatcher rd = sc.getRequestDispatcher("/JspLogin.jsp");
+                    rd.forward(request, response);
+                }
+                break;
+            case "payAnnuler":
+                 if(isAuthenticated(request))
+                {
                     HttpSession session = request.getSession(true);
                     //on regarde si l'utilisateur est bien connecté
-                    sc.log("Appuie sur le bouton Payer");
-                    /*RequestDispatcher rd = sc.getRequestDispatcher("/.jsp");
-                    rd.forward(request, response);*/
+                    RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
+                    rd.forward(request, response);
                 }
                 else
                 {
