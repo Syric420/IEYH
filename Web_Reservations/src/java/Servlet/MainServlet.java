@@ -5,7 +5,6 @@
  */
 package Servlet;
 
-import Classes.LinkedListReservation;
 import Database.facility.BeanBD;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -190,6 +189,24 @@ public class MainServlet extends HttpServlet {
                     }
                     RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
                         rd.forward(request, response);
+                }
+                else
+                {
+                    //s'il est pas connecté alors on le renvoie au login
+                    msgErreur = "Erreur - veuillez vous connecter";
+                    request.setAttribute("msgErreur", msgErreur);
+                    RequestDispatcher rd = sc.getRequestDispatcher("/JspLogin.jsp");
+                    rd.forward(request, response);
+                }
+                break;
+            case "initDeco":
+                if(isAuthenticated(request))
+                {
+                    HttpSession session = request.getSession(true);
+                    //on regarde si l'utilisateur est bien connecté
+                    session.invalidate();
+                    RequestDispatcher rd = sc.getRequestDispatcher("/JspLogin.jsp");
+                    rd.forward(request, response);
                 }
                 else
                 {
@@ -468,8 +485,7 @@ public class MainServlet extends HttpServlet {
                     pst.executeUpdate();
                     
                     setAuthenticated(request, true);
-                    RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
-                    rd.forward(request, response);
+                    
                     //-------------------
                     
                     //On crée l'utilisateur
@@ -489,7 +505,8 @@ public class MainServlet extends HttpServlet {
                     pst.setInt(3, refVoyageur);
                     System.out.println("Requete SQL = "+pst.toString());
                     pst.executeUpdate();
-                    
+                    RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
+                    rd.forward(request, response);
                     //----------------------
                 } catch (SQLException | ParseException ex) {
                     Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);

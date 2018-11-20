@@ -71,5 +71,9 @@
             <p> Vous voulez payer ? <input type="submit" value="Payer" /></p>
             <input type="hidden" name="action" value="initpayer">
         </form>
+        <form name="btnDecconecter" action="MainServlet">
+            <p> Vous voulez vous déconnecter ? <input type="submit" value="Se déconnecter" /></p>
+            <input type="hidden" name="action" value="initDeco">
+        </form>
     </body>
 </html>
