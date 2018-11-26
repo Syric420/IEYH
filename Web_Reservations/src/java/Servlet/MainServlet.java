@@ -39,7 +39,7 @@ public class MainServlet extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
-    BeanBD BD;
+    static BeanBD BD;
     ResultSet rs;
     
     @Override
@@ -269,6 +269,7 @@ public class MainServlet extends HttpServlet {
 
                         pst.executeUpdate();
 
+                        //Envoi du mail de confirmation 
                         RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
                         rd.forward(request, response);
                     } catch (SQLException ex) {
