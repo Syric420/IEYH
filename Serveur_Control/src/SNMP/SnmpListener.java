@@ -7,6 +7,7 @@ package SNMP;
 
 import Graphique.ServeurManagement;
 import java.util.Vector;
+import javax.swing.JOptionPane;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
 import org.snmp4j.event.ResponseEvent;
@@ -31,17 +32,24 @@ public class SnmpListener implements ResponseListener
     @Override
     public void onResponse(ResponseEvent event)
     {
-        ((Snmp)event.getSource()).cancel(event.getRequest(), this);
-        System.out.println("Réponse reçue (PDU): "+event.getResponse());
         
-        PDU rep = event.getResponse();
-        int nValues = rep.size();
-        for (int i=0; i<nValues; i++)
-        {
-            VariableBinding vb = rep.get(i);
-            Variable value = vb.getVariable();
-            gui.modelJlist.addElement(vb);
-        }
+            ((Snmp)event.getSource()).cancel(event.getRequest(), this);
+            System.out.println("Réponse reçue (PDU): "+event.getResponse());
+
+            PDU rep = event.getResponse();
+            if(rep != null)
+            {
+                int nValues = rep.size();
+                for (int i=0; i<nValues; i++)
+                {
+                    VariableBinding vb = rep.get(i);
+                    Variable value = vb.getVariable();
+                    gui.modelJlist.addElement(vb);
+                }
+            }
+            else
+                JOptionPane.showMessageDialog(gui, "Erreur : Pas de réponse", "Serveur_Control", JOptionPane.ERROR_MESSAGE);
+        
     }
 }
             

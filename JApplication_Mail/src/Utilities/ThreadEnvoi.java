@@ -55,7 +55,7 @@ public class ThreadEnvoi extends Thread {
 
     @Override
     public void run() {
-        Properties prop = System.getProperties();
+            Properties prop = System.getProperties();
         
             prop.put("mail.smtp.host", "u2.tech.hepl.local");
             System.out.println("Création d'une session mail");

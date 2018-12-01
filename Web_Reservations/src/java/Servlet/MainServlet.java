@@ -13,8 +13,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -41,7 +49,8 @@ public class MainServlet extends HttpServlet {
      */
     static BeanBD BD;
     ResultSet rs;
-    
+    static String charset = "iso-8859-1";
+    Session sess;
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
@@ -50,6 +59,16 @@ public class MainServlet extends HttpServlet {
         BD = new BeanBD();
         BD.setTypeBD("mysql");
         BD.connect();
+        
+        Properties prop = System.getProperties();
+        
+        prop.put("mail.smtp.host", "u2.tech.hepl.local");
+        System.out.println("Création d'une session mail");
+        //prop.put("mail.smtp.starttls.enable", "true");
+        //prop.put("file.encoding", charset);
+        //prop.put("mail.smtp.port", "587");
+        sess = Session.getDefaultInstance(prop, null);
+        
     }
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -268,11 +287,51 @@ public class MainServlet extends HttpServlet {
                         pst.setInt(1, (int)session.getAttribute("identifiant"));
 
                         pst.executeUpdate();
+                        
+                        //On récupère le prix de la personne
+                        pst = BD.getCon().prepareStatement("Select prixNet FROM reservation WHERE idReferent = ?");
+                        pst.setInt(1, (int)session.getAttribute("identifiant"));
+                        rs = pst.executeQuery();
+                        
+                        if(rs.first())
+                        {
+                            //Envoi du mail de confirmation 
+                            String mdp = "Larousse1";
+                            String exp = "hooghen";
+                            String dest;
+                            String sujet = "Facture IEYH";
+                            String texte = "Votre facture s'élève au montant total de "+ rs.getInt(1) +"€";
 
-                        //Envoi du mail de confirmation 
+                            ;
+
+                            pst = BD.getCon().prepareStatement("Select email FROM vyoyageur WHERE idVoyageur = ?");
+                            pst.setInt(1, (int)session.getAttribute("identifiant"));
+                            rs = pst.executeQuery();
+
+                            if(rs.first())
+                            {
+                                dest = rs.getString(1);
+                                // On crée l'email et on ajoute toutes les données possibles
+                                MimeMessage msg = new MimeMessage (sess);
+                                msg.setFrom (new InternetAddress (exp));
+                                msg.setSubject(sujet);
+                                msg.setRecipient (Message.RecipientType.TO, new InternetAddress (dest));
+                                //On l'envoie
+                                Transport.send(msg, exp, mdp);
+                                System.out.println("Message envoyé");
+                            }
+                        }
+                        
+                        
+                        
+                        
                         RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
                         rd.forward(request, response);
                     } catch (SQLException ex) {
+                        Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (AddressException ex) {
+                        Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (MessagingException ex) {
                         Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
