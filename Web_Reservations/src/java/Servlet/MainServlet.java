@@ -292,9 +292,10 @@ public class MainServlet extends HttpServlet {
                         pst = BD.getCon().prepareStatement("Select prixNet FROM reservation WHERE idReferent = ?");
                         pst.setInt(1, (int)session.getAttribute("identifiant"));
                         rs = pst.executeQuery();
-                        
+                        System.out.println(pst.toString());
                         if(rs.first())
                         {
+                            
                             //Envoi du mail de confirmation 
                             String mdp = "Larousse1";
                             String exp = "hooghen";
@@ -302,12 +303,10 @@ public class MainServlet extends HttpServlet {
                             String sujet = "Facture IEYH";
                             String texte = "Votre facture s'élève au montant total de "+ rs.getInt(1) +"€";
 
-                            ;
-
-                            pst = BD.getCon().prepareStatement("Select email FROM vyoyageur WHERE idVoyageur = ?");
+                            pst = BD.getCon().prepareStatement("Select email FROM voyageur WHERE idVoyageur = ?");
+                            
                             pst.setInt(1, (int)session.getAttribute("identifiant"));
-                            rs = pst.executeQuery();
-
+                            rs = pst.executeQuery(); 
                             if(rs.first())
                             {
                                 dest = rs.getString(1);
@@ -316,6 +315,7 @@ public class MainServlet extends HttpServlet {
                                 msg.setFrom (new InternetAddress (exp));
                                 msg.setSubject(sujet);
                                 msg.setRecipient (Message.RecipientType.TO, new InternetAddress (dest));
+                                System.out.println(msg.toString());
                                 //On l'envoie
                                 Transport.send(msg, exp, mdp);
                                 System.out.println("Message envoyé");
