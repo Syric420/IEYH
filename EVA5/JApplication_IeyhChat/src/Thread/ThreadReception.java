@@ -17,14 +17,14 @@ public class ThreadReception extends Thread
     boolean client;
     javax.swing.JComboBox<String> jComboBoxQuestion;
     
-    public ThreadReception (String n, boolean bool, MulticastSocket ms, JList<String> l, JComboBox<String> jComboBox)
+    public ThreadReception (String n, boolean flag, MulticastSocket ms, JList<String> l, JComboBox<String> jComboBox)
     {
         nom = n;
         socketGroupe = ms; 
         LMsgRecus = l;
-        client = bool;
         jComboBoxQuestion = jComboBox;
-        if(!bool)
+        
+        if(flag)
         {
             DefaultComboBoxModel dcbm = (DefaultComboBoxModel) jComboBoxQuestion.getModel();
             dcbm.addElement("Post Event");

@@ -34,7 +34,7 @@ public class Chat extends javax.swing.JFrame
         {
             checkBoxQuestion.setEnabled(true);
             voy = new Voyageur(username, adresse, port);
-            thr = new ThreadReception(username, true, voy.getSocketGroupe(), listChat, null); //true car voyageur
+            thr = new ThreadReception(username, false, voy.getSocketGroupe(), listChat, comboBoxQuestion);
             thr.start();
             String msgDeb = voy.getIdentifiant() + " rejoint le groupe";
             voy.post_Event(msgDeb);
@@ -43,7 +43,7 @@ public class Chat extends javax.swing.JFrame
         {
             comboBoxQuestion.setEnabled(true);
             emp = new Employe(username, adresse, port);
-            thr = new ThreadReception(username, false, emp.getSocketGroupe(), listChat, comboBoxQuestion); //false car employé
+            thr = new ThreadReception(username, true, emp.getSocketGroupe(), listChat, comboBoxQuestion); //true car employé -- pour ajouter post event dans combo box
             thr.start();
             String msgDeb = emp.getIdentifiant() + " rejoint le groupe";
             emp.post_Event(msgDeb);
@@ -123,7 +123,7 @@ public class Chat extends javax.swing.JFrame
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 495, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 516, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -135,7 +135,7 @@ public class Chat extends javax.swing.JFrame
                         .addComponent(buttonLogout))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(checkBoxQuestion)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(comboBoxQuestion, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );

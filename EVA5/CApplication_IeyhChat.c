@@ -22,24 +22,22 @@
 #include <unistd.h>
 #include <pthread.h>
 
-
 //cc -o IeyhChat CApplication_IeyhChat.c -lnsl -lpthread
 
 void *fct_threadReception(void *);
 void afficheMessage(char*);
 
 pthread_t threadReception;
-struct sockaddr_in adresseSocketReception;
+struct sockaddr_in adresseSocket;
 unsigned int tailleSockaddr_in;
 int hSocket; /* Handle de la socket */
-int sSocket;
 
 int main(int argc, char** argv)
 {
-    struct hostent * infosHost;
-    struct in_addr adresseIP;
-    
-    struct sockaddr_in adresseSocketEnvoi;
+	struct hostent * infosHost; /*Infos sur le host : pour gethostbyname */
+	struct in_addr adresseIP; /* Adresse Internet au format reseau */
+	int ret; /* valeur de retour */
+	char msgClient[MAXSTRING], msgServeur[MAXSTRING];
     int rep;
     
     char msgAEnvoyer[MAXSTRING];
@@ -50,63 +48,45 @@ int main(int argc, char** argv)
     int flagReuse = 1;
     unsigned char ttl = 5;
     
-    
-    
-    /* 1. Creation de la socket */
-    hSocket = socket(AF_INET, SOCK_DGRAM, 0);
-    if (hSocket == -1)
-    {
-        printf("Erreur de creation de la socket %d\n", errno); exit(1);
-    }
-    else printf("Creation de la socket OK\n");
-    
-    sSocket = socket(AF_INET, SOCK_DGRAM, 0);
-    if (hSocket == -1)
-    {
-        printf("Erreur de creation de la socket %d\n", errno); exit(1);
-    }
-    else printf("Creation de la socket OK\n");
-    
-    
-    /* 2. Acquisition des informations sur l'ordinateur local */
-    if ( (infosHost = gethostbyname("192.168.0.36"))==0)
-    {
-        printf("Erreur d'acquisition d'infos sur le host %d\n", errno); exit(1);
-    }
-    else printf("Acquisition infos host OK\n");
-    memcpy(&adresseIP, infosHost->h_addr, infosHost->h_length);
-    printf("Adresse IP host = %s\n",inet_ntoa(adresseIP));
-    /* 3. Preparation de la structure sockaddr_in du Client */
-    tailleSockaddr_in = sizeof(struct sockaddr_in);
-    memset(&adresseSocketReception, 0, tailleSockaddr_in);
-    adresseSocketReception.sin_family = AF_INET;
-    adresseSocketReception.sin_port = htons(PORT_MULTI);
-    adresseSocketReception.sin_addr.s_addr = inet_addr(IP_MULTICAST);
-    
-    tailleSockaddr_in = sizeof(struct sockaddr_in);
-    memset(&adresseSocketEnvoi, 0, tailleSockaddr_in);
-    adresseSocketEnvoi.sin_family = AF_INET;
-    adresseSocketEnvoi.sin_port = htons(PORT_MULTI);
-    adresseSocketEnvoi.sin_addr.s_addr = inet_addr(IP_MULTICAST);
-    
+    /* 1. Création de la socket */
+	hSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (hSocket == -1)
+	{
+		printf("Erreur de creation de la socket %d\n", errno);
+		exit(1);
+	}
+	else 
+		printf("Creation de la socket OK\n");
 
-    memcpy(&mreq.imr_multiaddr, &adresseSocketReception.sin_addr,tailleSockaddr_in);
-    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-    setsockopt (hSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq,sizeof(mreq));
-    setsockopt(hSocket, SOL_SOCKET, SO_REUSEADDR, &mreq, sizeof(mreq));
-    setsockopt (hSocket, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl));
-    
-    /* 4. Le systeme prend connaissance de l'adresse et du port de la socket */
-    if (bind(hSocket, (struct sockaddr *)&adresseSocketReception,
-    tailleSockaddr_in) == -1)
-    {
-        printf("Erreur sur le bind de la socket %d\n", errno); exit(1);
-    }
-    else printf("Bind adresse et port socket OK\n");
-    
-    
-    /* 5. Parametrage de la socket */
-    
+	/* 2. Acquisition des informations sur l'ordinateur distant */
+	if ( (infosHost = gethostbyname("10.59.22.101"))==0)
+	{
+		printf("Erreur d'acquisition d'infos sur le host distant %d\n", errno);
+		exit(1);
+	}
+	else 
+		printf("Acquisition infos host distant OK\n");
+	memcpy(&adresseIP, infosHost->h_addr, infosHost->h_length);
+	printf("Adresse IP = %s\n",inet_ntoa(adresseIP));
+
+	/* 3. Préparation de la structure sockaddr_in */
+	memset(&adresseSocket, 0, sizeof(struct sockaddr_in));
+	adresseSocket.sin_family = AF_INET; /* Domaine */
+	adresseSocket.sin_port = htons(PORT_MULTI);
+	/* conversion numéro de port au format réseau */
+	memcpy(&adresseSocket.sin_addr, infosHost->h_addr,infosHost->h_length);
+
+	/* 4. Tentative de connexion */
+	tailleSockaddr_in = sizeof(struct sockaddr_in);
+	if (( ret = connect(hSocket, (struct sockaddr *)&adresseSocket, tailleSockaddr_in)) == -1)
+	{
+		printf("Erreur sur connect de la socket %d\n", errno);
+		close(hSocket);
+		exit(1);
+	}
+	else 
+		printf("Connect socket OK\n");
+
     do
     {
         printf("Veuillez mettre votre identifiant: \n");
@@ -114,7 +94,6 @@ int main(int argc, char** argv)
     }while(strcmp("\n", identifiant)==0);//Tant qu'il a mis juste enter on reste dans la boucle
     
     identifiant[strlen(identifiant)-1]=0;
-    
     
     system("clear");
     printf("Bienvenue %s",identifiant);
@@ -125,13 +104,14 @@ int main(int argc, char** argv)
     printf("Taper ENTER une fois vous avez bien compris\n");
     getchar();
     system("clear");
-    if (pthread_create(&threadReception, NULL,  fct_threadReception, NULL)) {
-	perror("pthread_create");
-	return EXIT_FAILURE;
+    if (pthread_create(&threadReception, NULL, fct_threadReception, NULL))
+	{
+		perror("pthread_create");
+		return EXIT_FAILURE;
     }
+
     do
     {
-        
         fgets(buff, sizeof(buff), stdin);
         rep = atoi(buff);
         switch(rep)
@@ -152,20 +132,17 @@ int main(int argc, char** argv)
                 fgets(buff, sizeof(buff), stdin);
                 strcat(msgAEnvoyer, buff);
                 break;
-                
         }
         if(strlen(buff)>1)
         {
-            if (sendto(sSocket,msgAEnvoyer,strlen(msgAEnvoyer),0,(struct sockaddr *) &adresseSocketEnvoi,
-		     sizeof(adresseSocketEnvoi)) < 0) {
-	       perror("sendto");
-	       exit(1);
-	  }
+			if(sendto(hSocket,msgAEnvoyer,strlen(msgAEnvoyer),0,(struct sockaddr *) &adresseSocket, sizeof(adresseSocket)) < 0)
+			{
+	        	perror("sendto");
+	        	exit(1);
+	  		}
             fflush(stdout);
             fflush(stdin);
         }
-         
-        
     }while(rep!=3);
     /* 9. Fermeture de la socket */
     close(hSocket); /* Fermeture de la socket */
@@ -178,13 +155,11 @@ void *fct_threadReception(void *p)
     char msg[MAXSTRING];
     int nbreRecv;
     
-    
     do
     {
         /* 6.Reception d'un message serveur */
         memset(msg, 0, MAXSTRING);
-        if ((nbreRecv = recvfrom(hSocket, msg, MAXSTRING, 0,
-        (struct sockaddr *)&adresseSocketReception,&tailleSockaddr_in)) == -1)
+        if ((nbreRecv = recvfrom(hSocket, msg, MAXSTRING, 0, (struct sockaddr *)&adresseSocket,&tailleSockaddr_in)) == -1)
         {
             printf("Erreur sur le recvfrom de la socket %d\n", errno);
             close(hSocket); /* Fermeture de la socket */
@@ -196,10 +171,6 @@ void *fct_threadReception(void *p)
             afficheMessage(msg);
             fflush(stdout);
         }
-        
-        
-        //printf("Adresse de l'emetteur = %s\n", inet_ntoa(adresseSocketReception.sin_addr));
-        
     }
     while (strcmp(msg, "#FINDUCHAT#"));
     
