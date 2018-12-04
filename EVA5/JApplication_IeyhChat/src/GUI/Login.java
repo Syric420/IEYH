@@ -1,22 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package GUI;
 
 import HOLICOP.*;
 import Message.*;
 import java.io.*;
 import java.net.*;
+import java.util.Properties;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author Mika
- */
 public class Login extends javax.swing.JDialog
 {
+    private String adresse_TCP;
+    private int port_TCP;
+    
     private String username;
     private String adresse;
     private String personne;
@@ -38,9 +33,32 @@ public class Login extends javax.swing.JDialog
     
     public void connectTcp() 
     {
+        FileInputStream fis = null;
         try
         {
-            setCliSock(new Socket("192.168.0.36", 26085));
+            Properties prop = new Properties();
+            fis = new FileInputStream("src\\GUI\\config.properties");
+
+            prop.load(fis);
+            
+            String s;
+            s = "PORT_TALK";
+            System.out.println("PORT_TALK: " + prop.getProperty(s));
+            port_TCP = Integer.parseInt(prop.getProperty(s));
+            
+            s = "ADRESSE_TCP";
+            System.out.println("ADRESSE_TCP: " + prop.getProperty(s));
+            adresse_TCP = prop.getProperty(s);
+        }
+        
+        catch(IOException | NumberFormatException ex)
+        {
+            System.out.println("Serveur_Activites: Exception: " + ex.getMessage());
+        }
+        
+        try
+        {
+            setCliSock(new Socket(adresse_TCP, port_TCP));
             System.out.println("Client connecté : " + getCliSock().getInetAddress().toString());
         }
         catch (UnknownHostException e)
@@ -224,9 +242,9 @@ public class Login extends javax.swing.JDialog
             MessageLogin response = (MessageLogin)getOis().readObject(); //on lit la réponse
             if(!response.getUsername().contains("NOT")) //si réponse positive
             {
-                if(response.getUsername().contains("RESERVATION")) //si concerne voyageur
+                if(!response.getUsername().contains("PASSWORD")) //si concerne voyageur
                 {
-                    setUsername(fieldReservation.getText());
+                    setUsername(response.getUsername() + " " + fieldReservation.getText());
                     setPort(response.getPort_chat());
                     setAdresse(response.getAddresse_chat());
                     setPersonne("Voyageur");

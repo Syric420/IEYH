@@ -53,7 +53,7 @@ public class RequeteHOLICOP implements Serializable
         return ret;
     }
 
-    private boolean treatReservationCheck() //va voir si la réservation existe ou non
+    private String treatReservationCheck() //va voir si la réservation existe ou non
     {
         MessageLogin m = (MessageLogin)mes;
         try 
@@ -64,15 +64,28 @@ public class RequeteHOLICOP implements Serializable
             System.out.println("Requete SQL = " + pst.toString());
             rs = pst.executeQuery();
             if(rs.first()) //trouve réservation
-                return true;
+            {
+                String idReferent = rs.getString("idReferent");
+                pst = bd.getCon().prepareStatement("select nom, prenom from voyageur where idVoyageur = ?");
+                pst.setString(1, idReferent);
+                
+                System.out.println("Requete SQL = " + pst.toString());
+                rs = pst.executeQuery();
+                if(rs.first())
+                {
+                    String nom = rs.getString("nom");
+                    String prenom = rs.getString("prenom");
+                    return nom + " " + prenom;
+                }
+            }
             else //pas trouvé
-                return false;
+                return "RESERVATION ERROR";
         } 
         catch (SQLException ex) 
         {
             System.err.println("RequeteHOLICOP - Erreur " + ex.getSQLState());
         }
-        return false;
+        return "RESERVATION ERROR";
     }
 
     private String treatLoginCheck() //va aller chercher le mdp du user
@@ -87,7 +100,7 @@ public class RequeteHOLICOP implements Serializable
             rs = pst.executeQuery();
             if(rs.first()) //user existant
             {
-                String mdp =  rs.getString("password");
+                String mdp = rs.getString("password");
                 System.out.println("mdp SQL recu = " + mdp);
                 return mdp;
             }

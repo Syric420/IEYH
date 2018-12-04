@@ -93,12 +93,12 @@ public class ThreadAccept extends Thread
                     {
                         //on prépare une requête pour vérifier si la réservation du voyageur existe
                         RequeteHOLICOP req = new RequeteHOLICOP(RequeteHOLICOP.CHECK_RESERVATION, new MessageLogin(message.getUsername()), BD);
-                        boolean reservFlag = (boolean)req.executeQueryHOLICOP();
+                        String NomPrenom = (String)req.executeQueryHOLICOP();
                         
-                        if(reservFlag) //si elle existe
+                        if(!NomPrenom.equals("RESERVATION ERROR")) //si elle existe
                         {
                             logged=true;
-                            message.setUsername("RESERVATION OK");
+                            message.setUsername(NomPrenom);
                             message.setAddresse_chat(addresse_chat);
                             message.setPort_chat(port_chat);
                             oos.writeObject(message);

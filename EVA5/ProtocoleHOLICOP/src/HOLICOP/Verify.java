@@ -13,7 +13,7 @@ public class Verify
     
     public Verify()
     {
-         Security.addProvider(new BouncyCastleProvider());
+        Security.addProvider(new BouncyCastleProvider());
     }
     
     public byte[] getMd()
@@ -25,10 +25,9 @@ public class Verify
     { 
         try
         {
-            
             md = MessageDigest.getInstance("SHA-1", "BC");
             md.update(str.getBytes());
-            msgD= md.digest();          
+            msgD = md.digest();          
         }
         catch (NoSuchAlgorithmException | NoSuchProviderException ex)
         {

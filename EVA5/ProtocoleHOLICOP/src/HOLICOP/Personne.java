@@ -8,21 +8,20 @@ import java.net.UnknownHostException;
 
 public class Personne
 {
-    
     String identifiant;
     protected int port_chat;
     protected InetAddress adresseGroupe;
     protected MulticastSocket socketGroupe;
 
-    public Personne(String identifiant,String addresse_chat,int port)
+    public Personne(String identifiant, String addresse_chat, int port)
     {
         try
         {
-            System.out.println(identifiant+addresse_chat+port);
+            System.out.println("Personne - Infos: " + identifiant + " " + addresse_chat + " " + port);
             this.identifiant = identifiant;
             adresseGroupe = InetAddress.getByName(addresse_chat);
             socketGroupe = new MulticastSocket(port);
-            port_chat=port;
+            port_chat = port;
             socketGroupe.setTimeToLive(25);
             socketGroupe.joinGroup(adresseGroupe);
         }

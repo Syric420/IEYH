@@ -6,10 +6,9 @@ import java.net.DatagramPacket;
 
 public class Voyageur extends Personne
 {
-
-    public Voyageur(String identifiant,String addresse_chat,int port)
+    public Voyageur(String identifiant, String addresse_chat, int port)
     {
-        super(identifiant,addresse_chat,port);
+        super(identifiant, addresse_chat, port);
     }
     
     public void post_Question(String Question)
@@ -22,8 +21,8 @@ public class Voyageur extends Personne
             ver.setMD(Question);
             
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
-            outputStream.write( chaine.getBytes() );
-            outputStream.write( ver.getMd());
+            outputStream.write(chaine.getBytes());
+            outputStream.write(ver.getMd());
             
             byte[] var =  outputStream.toByteArray();
             System.out.println("Voyageur" + new String (var));

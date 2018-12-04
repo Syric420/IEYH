@@ -6,9 +6,9 @@ import java.net.DatagramPacket;
 public class Employe extends Personne
 {
 
-    public Employe(String identifiant,String addresse_chat,int port)
+    public Employe(String identifiant, String addresse_chat, int port)
     {
-        super(identifiant,addresse_chat,port);
+        super(identifiant, addresse_chat, port);
     }
     
     public void answer_Question(String Question)
@@ -16,7 +16,7 @@ public class Employe extends Personne
         try
         {
             String chaine = "2@" + Question;
-            DatagramPacket dtg = new DatagramPacket(chaine.getBytes(), chaine.length(),adresseGroupe, port_chat);
+            DatagramPacket dtg = new DatagramPacket(chaine.getBytes(), chaine.length(), adresseGroupe, port_chat);
             socketGroupe.send(dtg);
         } 
         catch (IOException ex)

@@ -97,7 +97,6 @@ public class Identify implements Serializable
             md.update(baos.toByteArray());
             msgD= md.digest();
             //System.out.println(U + " " + Pass + " " + msgD);
-            
         }
         catch (NoSuchAlgorithmException | NoSuchProviderException | IOException ex)
         {
