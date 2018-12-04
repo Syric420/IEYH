@@ -50,7 +50,6 @@ public class SnmpLib {
     {
         try
         {
-            
             PDU pdu = new PDU();
             pdu.add(new VariableBinding(new OID(o)));
             pdu.setType(PDU.GET);
