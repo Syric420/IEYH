@@ -22,16 +22,13 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Date;
+import javax.crypto.SecretKey;
 
 public class RequeteSPAYMAP implements Requete, Serializable
 {
     public static final int REQUEST_LOGIN = 0;
     public static final int REQUEST_LOGOUT = 1;
-    public static final int REQUEST_LISTROOM = 2;
-    public static final int REQUEST_BROOM = 3;
-    public static final int REQUEST_LISTRESERV = 4;
-    public static final int REQUEST_CROOM = 5;
-    public static final int REQUEST_PROOM = 6;
+    public static final int REQUEST_LISTRESERV = 3;
 
     private int type;
     private Message message;
@@ -64,6 +61,9 @@ public class RequeteSPAYMAP implements Requete, Serializable
             private PrivateKey cléPrivée;
             private PublicKey cléPublique;
             
+            private SecretKey cléSym;
+            private SecretKey cléSymHMAC;
+            
             private BeanBD BD = beanBD;
             private ResultSet rs;
             
@@ -87,7 +87,7 @@ public class RequeteSPAYMAP implements Requete, Serializable
                             break;
                         case REQUEST_LISTRESERV:
                             //System.out.println("Req = REQUEST_LISTRESERV");
-                            treatListReserv();
+                            treatListReservNonPayees();
                             break;
                     }
                     try 
@@ -143,7 +143,7 @@ public class RequeteSPAYMAP implements Requete, Serializable
                                     rep = new ReponseSPAYMAP(ReponseSPAYMAP.SUCCESS, "Login réussi");
                                     state = "AUTHENTICATED";
                                     System.out.println("Les deux digests sont identique + début du handshake");
-                                    handshake();
+                                    
                                 }
                                 else
                                 {
@@ -163,8 +163,12 @@ public class RequeteSPAYMAP implements Requete, Serializable
                         }
                     
                         try {
-                            if(rep!=null)
+                            if(rep != null && rep.getCode()== ReponseSPAYMAP.SUCCESS)
+                            {
                                 oos.writeObject(rep);
+                                handshake();
+                            }
+                                
 
                         } catch (IOException ex) {
                             Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
@@ -186,16 +190,29 @@ public class RequeteSPAYMAP implements Requete, Serializable
                     
                     X509Certificate certif = (X509Certificate)ks.getCertificate("paiementrsa");
                     cléPublique = certif.getPublicKey();
-                    System.out.println("Cle publique recuperee = "+cléPublique.toString());
+                    System.out.println("Cle publique du certificat de ServeurPaiement.JCEKS recuperée = "+cléPublique.toString());
                     //-------------------
-                    
-                    //Envoie de la clé publique au client
-                    oos.writeObject(cléPublique);
                     
                     //récupération de la clé publique du client
                     PublicKey cléPubliqueClient = (PublicKey)ois.readObject();
+                    System.out.println("Cle publique du client recuperée = "+cléPubliqueClient.toString());
+                     
                     
+                    //Une fois les deux clés publiques échangées il va falloir envoyer les deux clés symétriques au client en les cryptant avec RSA
+                    //Récupération des clés dans le keystore
+                    cléSym = (SecretKey) ks.getKey("paiementsym", "123".toCharArray());
+                    cléSymHMAC = (SecretKey) ks.getKey("paiementsymhmac", "123".toCharArray());
+                    //On les transforme en byte 
+                    byte [] cléSymByte = cléSym.getEncoded();
+                    byte [] cléSymHMACByte = cléSymHMAC.getEncoded();
                     
+                    //On les crypte avec la clé publique du client
+                    byte [] cléSymByteCrypted = BouncyClass.encryptRSA(cléPubliqueClient, cléSymByte);
+                    byte [] cléSymHMACByteCrypted = BouncyClass.encryptRSA(cléPubliqueClient, cléSymHMACByte);
+                    
+                    //On les envoie au client
+                    oos.writeObject(cléSymByteCrypted);oos.writeObject(cléSymHMACByteCrypted);
+                    System.out.println("Envoie des deux clés sym cryptée avec RSA");
                     
                     /*Il y a deux clés symétriques à envoyer, une pour chiffrer les données et l'autre pour fabriquer un HMAC
                     /énoncé : Enfin, la clé symétrique (clé secrète) utilisée par un employé pour s'authentifier 
@@ -230,12 +247,12 @@ public class RequeteSPAYMAP implements Requete, Serializable
                 }
             }
             
-            private void treatListReserv() {
+            private void treatListReservNonPayees() {
                  try {
                     //Il faut juste lister les différentes reservations possibles
                     
                     //Récupération des différentes reservations dans la BD
-                    ResultSet rs = BD.executeQuery("Select * from reservation");
+                    ResultSet rs = BD.executeQuery("Select * from reservation WHERE boolpaye = '0'");
                     //System.out.println("ListReserv");
                      
                     MessageListVector mlv = new MessageListVector();
@@ -251,14 +268,14 @@ public class RequeteSPAYMAP implements Requete, Serializable
                         Date dateFin = rs.getDate(4);
                         
                         float prixNet = rs.getFloat(5);
-                        boolean paye = rs.getBoolean(6);
+                        float prixPaye = rs.getFloat("prixPaye");
                         
                         vecRoom.add(id);
                         vecRoom.add(typeReserv);
                         vecRoom.add(dateDebut);
                         vecRoom.add(dateFin);
                         vecRoom.add(prixNet);
-                        vecRoom.add(paye);
+                        vecRoom.add(prixPaye);
                         
                         mlv.getListVector().add(vecRoom);
                     }

@@ -19,6 +19,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import Utilities.BouncyClass;
+import java.io.FileNotFoundException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  *
@@ -33,6 +44,7 @@ public class Login extends javax.swing.JDialog
     private ObjectInputStream ois;
     private RequeteSPAYMAP req;
     private ReponseSPAYMAP rep;
+    
             
     public Login(java.awt.Frame parent, boolean modal, Socket sock, ObjectOutputStream oos, ObjectInputStream ois)
     {
@@ -134,12 +146,60 @@ public class Login extends javax.swing.JDialog
             {
                 //Login réussi
                 //((ApplicationForm)this.getParent());
+                handshake();
+                ((ApplicationForm)this.getParent()).chargeReservation();
                 this.setVisible(false);
                 
             }
         }
     }//GEN-LAST:event_buttonOKActionPerformed
 
+    private void handshake() 
+    {
+        try {
+            KeyStore ks = null;
+            ks = KeyStore.getInstance("JCEKS");
+            ks.load(new FileInputStream("C:\\Users\\vhoog\\Documents\\Projets ecole\\IEYH\\Application_Paiements\\ApplicationPaiement.JCEKS"),
+                    "123".toCharArray());
+            
+            //Récupération du certificat du client + clé publique qu'il y a dedans
+            X509Certificate certif = (X509Certificate)ks.getCertificate("paiementrsa");
+            ((ApplicationForm)this.getParent()).setCléPublique(certif.getPublicKey());
+            System.out.println("Cle publique du certificat de ApplicationPaiement.JCEKS recuperée = "+((ApplicationForm)this.getParent()).getCléPublique().toString());
+            
+            //récupération clé privée
+            ((ApplicationForm)this.getParent()).setCléPrivée((PrivateKey) ks.getKey("paiementrsa", "123".toCharArray()));
+            System.out.println("Cle privee recuperee : " + ((ApplicationForm)this.getParent()).getCléPrivée().toString());
+            
+            //Envoi de la clé publique au serveur
+            oos.writeObject(((ApplicationForm)this.getParent()).getCléPublique());
+            
+            //Lecture des deux clés symétriques cryptée que le serveur va envoyer au format byte []
+            byte [] cléSymByteCrypted = (byte[])ois.readObject();
+            byte [] cléSymHMACByteCrypted = (byte[])ois.readObject();
+            
+            //On les décrypte à l'aide de la clé privée du client
+            byte [] cléSymByte = BouncyClass.decryptRSA(((ApplicationForm)this.getParent()).getCléPrivée(), cléSymByteCrypted);
+            byte [] cléSymHMACByte = BouncyClass.decryptRSA(((ApplicationForm)this.getParent()).getCléPrivée(), cléSymHMACByteCrypted);
+            
+            //on convertit les clés qui sont en byte [] en clé normales pour avoir plus facile à les utiliser
+            SecretKey cléSym = new SecretKeySpec(cléSymByte, 0, cléSymByte.length, "AES");
+            SecretKey cléSymHMAC = new SecretKeySpec(cléSymHMACByte, 0, cléSymHMACByte.length, "AES");
+            System.out.println("cléSym : " + cléSym.toString());
+            System.out.println("cléSymHMAC : " + cléSymHMAC.toString());
+            
+            //Envoie à la gui ApplicationForm pour l'utiliser là bas
+            ((ApplicationForm)this.getParent()).setCléSym(cléSym);
+            ((ApplicationForm)this.getParent()).setCléSymHMAC(cléSymHMAC);
+            
+        } catch (KeyStoreException | ClassNotFoundException | IOException | NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException ex) {
+            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+            System.exit(0);
+        } 
+        
+        
+    }
+        
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         req = new RequeteSPAYMAP(RequeteSPAYMAP.REQUEST_LOGOUT);
         if(oos != null)
@@ -158,9 +218,7 @@ public class Login extends javax.swing.JDialog
                     JOptionPane.showMessageDialog(this, "Erreur dans la deconnexion");
                     System.exit(0);
                 }
-            } catch (IOException ex) {
-                Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (ClassNotFoundException ex) {
+            } catch (IOException | ClassNotFoundException ex) {
                 Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -314,6 +372,8 @@ public class Login extends javax.swing.JDialog
             return false;
         }
     }*/
+
+
 
     
 }
