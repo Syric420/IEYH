@@ -28,7 +28,8 @@ public class RequeteSPAYMAP implements Requete, Serializable
 {
     public static final int REQUEST_LOGIN = 0;
     public static final int REQUEST_LOGOUT = 1;
-    public static final int REQUEST_LISTRESERV = 3;
+    public static final int REQUEST_LISTRESERV = 2;
+    public static final int REQUEST_PAIEMENT = 3;
 
     private int type;
     private Message message;

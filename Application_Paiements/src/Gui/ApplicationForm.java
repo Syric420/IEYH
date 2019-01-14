@@ -28,6 +28,7 @@ import Class.*;
 public class ApplicationForm extends javax.swing.JFrame {
 
     Login login = null;
+    PaiementDialog pd = null;
     Socket socket;
     int port;
     String adresseIP;
@@ -59,6 +60,7 @@ public class ApplicationForm extends javax.swing.JFrame {
             //----------------------
             
             login = new Login(this,true, socket, oos, ois);
+            pd = new PaiementDialog(this, true, oos, ois);
             login.setVisible(true);
             
         } catch (IOException ex) {
@@ -74,7 +76,7 @@ public class ApplicationForm extends javax.swing.JFrame {
                         
                     },
                     new String [] {
-                        "idReservation", "typeReservation", "DateDébut", "DateFin", "Prix", "Prix déjà payé"
+                        "idReservation", "typeReservation", "DateDébut", "DateFin", "Prix total", "Prix déjà payé"
                     }
             ) {
                 Class[] types = new Class [] {
@@ -168,21 +170,21 @@ public class ApplicationForm extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 649, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 769, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(253, 253, 253))
+                .addGap(290, 290, 290))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 343, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, 51, Short.MAX_VALUE)
-                .addGap(16, 16, 16))
+                .addContainerGap())
         );
 
         pack();
@@ -191,7 +193,10 @@ public class ApplicationForm extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         if(jTable1.getSelectedRow()!= -1)
         {
-            
+            int ligne = jTable1.getSelectedRow();
+            pd.jLabel_sommeTotalAPayer.setText(jTable1.getValueAt(ligne, 4).toString());
+            pd.jLabel_sommeDejaPayee.setText(jTable1.getValueAt(ligne, 5).toString());
+            pd.setVisible(true);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
