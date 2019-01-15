@@ -24,9 +24,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
  */
 public class ServForm extends javax.swing.JFrame implements ConsoleServeur
 {
-    int port, nbMaxCli, portCard;
-    String adresseIpCard=null;
-    Socket socketCard= null;
+    int port, nbMaxCli;
     ServerSocket SSocket = null;
     Socket CSocket = null;
     BeanBD BD=null;
@@ -41,10 +39,8 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
         Security.addProvider(new BouncyCastleProvider());
         try {
             ReadProperties rp = new ReadProperties("/Utilities/config.properties");
-            port = Integer.parseInt(rp.getProp("PORT_PAY"));
-            portCard = Integer.parseInt(rp.getProp("PORT_CARD"));
+            port = Integer.parseInt(rp.getProp("PORT_CARD"));
             nbMaxCli = Integer.parseInt(rp.getProp("NB_MAX_CLI"));
-            adresseIpCard = rp.getProp("ADRESSE_IP_SERVCARD");
             labelPort.setText(String.valueOf(port));
             TraceEvenements("serveur#initialisation#" + this.getClass());
             //Connexion BD
@@ -52,11 +48,7 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
             BD.setTypeBD("mysql");
             BD.connect();
             //-------------
-            System.out.println("Adresse ip :"+adresseIpCard);
-            System.out.println("Port :"+port);
-            socketCard = new Socket(adresseIpCard, portCard);
-            
-            
+
             buttonStartActionPerformed(null);
         } catch (IOException ex) {
             Logger.getLogger(ServForm.class.getName()).log(Level.SEVERE, null, ex);
@@ -79,7 +71,7 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
         tableEvent = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Serveur Paiements");
+        setTitle("Serveur Card");
 
         buttonStart.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
         buttonStart.setText("Start");
@@ -140,7 +132,7 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
     private void buttonStartActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_buttonStartActionPerformed
     {//GEN-HEADEREND:event_buttonStartActionPerformed
         TraceEvenements("serveur#acquisition du port#" + this.getClass());
-        ThreadSer thrs = new ThreadSer(port, nbMaxCli, new ListeTaches(), this, BD, socketCard);
+        ThreadSer thrs = new ThreadSer(port, nbMaxCli, new ListeTaches(), this, BD);
         thrs.start();
         buttonStart.setEnabled(false);
     }//GEN-LAST:event_buttonStartActionPerformed

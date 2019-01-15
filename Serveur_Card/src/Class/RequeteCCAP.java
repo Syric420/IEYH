@@ -24,12 +24,9 @@ import java.sql.SQLException;
 import java.sql.Date;
 import javax.crypto.SecretKey;
 
-public class RequeteSPAYMAP implements Requete, Serializable
+public class RequeteCCAP implements Requete, Serializable
 {
-    public static final int REQUEST_LOGIN = 0;
-    public static final int REQUEST_LOGOUT = 1;
-    public static final int REQUEST_LISTRESERV = 2;
-    public static final int REQUEST_PAIEMENT = 3;
+    public static final int REQUEST_VERIF = 0;
 
     private int type;
     private Message message;
@@ -40,12 +37,12 @@ public class RequeteSPAYMAP implements Requete, Serializable
     }
     
     
-    public RequeteSPAYMAP(int type)
+    public RequeteCCAP(int type)
     {
         this.type = type;
     }
     
-    public RequeteSPAYMAP(int type, Message m)
+    public RequeteCCAP(int type, Message m)
     {
         this.type = type;
         this.message = m;
@@ -56,23 +53,12 @@ public class RequeteSPAYMAP implements Requete, Serializable
     {
         return new Runnable()
         {
-            private ReponseSPAYMAP rep;
-            private RequeteSPAYMAP req = new RequeteSPAYMAP(type, message);
-            
-            private PrivateKey cléPrivée;
-            private PublicKey cléPublique;
-            private PublicKey cléPubliqueClient;
-            
-            private SecretKey cléSym;
-            private SecretKey cléSymHMAC;
-            
-            private ObjectOutputStream oosCard = null;
-            private ObjectInputStream oisCard = null;
+            private ReponseCCAP rep;
+            private RequeteCCAP req = new RequeteCCAP(type, message);
             
             private BeanBD BD = beanBD;
             private ResultSet rs;
             
-            private String state = "NON_AUTHENTICATED";
             
             @Override
             public void run() 
@@ -82,30 +68,19 @@ public class RequeteSPAYMAP implements Requete, Serializable
                 {
                     switch(req.getType())
                     {
-                        case REQUEST_LOGIN:
+                        case REQUEST_VERIF:
                             //System.out.println("Req = REQUEST_LOGIN");
-                            treatLogin();
-                            break;
-                        case REQUEST_LOGOUT:
-                            //System.out.println("Req = REQUEST_LOGOUT");
-                            treatLogout();
-                            break;
-                        case REQUEST_LISTRESERV:
-                            //System.out.println("Req = REQUEST_LISTRESERV");
-                            treatListReservNonPayees();
-                            break;
-                        case REQUEST_PAIEMENT:
-                            treatDemandePaiement();
+                            treatVerif();
                             break;
                     }
                     try 
                     {
                         rep= null;
-                        req = (RequeteSPAYMAP) ois.readObject();
+                        req = (RequeteCCAP) ois.readObject();
                     } 
                     catch (ClassNotFoundException ex) 
                     {
-                        Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
                         disconnected = true;
                     } 
                     catch (IOException ex) 
@@ -117,15 +92,16 @@ public class RequeteSPAYMAP implements Requete, Serializable
                 
             }
             
-            private void treatLogin() 
+            private void treatVerif() 
             {
-                    MessageLoginDigest m = (MessageLoginDigest)req.message;
-                    PreparedStatement pst = null;
-                    ReponseSPAYMAP rep=null;
+                    MessageVerifCard m = (MessageVerifCard)req.message;
+                    
+                    /*PreparedStatement pst = null;
+                    ReponseCCAP rep=null;
                     
                     if(state.equals("AUTHENTICATED"))
                     {
-                        rep = new ReponseSPAYMAP(ReponseSPAYMAP.FAILED, "Déjà authentifié");
+                        rep = new ReponseCCAP(ReponseCCAP.FAILED, "Déjà authentifié");
                         //return;
                     }
                     else
@@ -148,47 +124,43 @@ public class RequeteSPAYMAP implements Requete, Serializable
                                 if(BouncyClass.isSaltDigestEqual(digest, m.getDigest()))
                                 {
                                     //Les deux digests sont identiques
-                                    rep = new ReponseSPAYMAP(ReponseSPAYMAP.SUCCESS, "Login réussi");
+                                    rep = new ReponseCCAP(ReponseCCAP.SUCCESS, "Login réussi");
                                     state = "AUTHENTICATED";
                                     System.out.println("Les deux digests sont identique + début du handshake");
-                                    
-                                    oosCard = new ObjectOutputStream(socketCard.getOutputStream());
-                                    oisCard = new ObjectInputStream(socketCard.getInputStream());
                                     
                                 }
                                 else
                                 {
-                                    rep = new ReponseSPAYMAP(ReponseSPAYMAP.FAILED, "Mauvais mot de passe");
+                                    rep = new ReponseCCAP(ReponseCCAP.FAILED, "Mauvais mot de passe");
                                     System.out.println("Erreur - les mots de passe ne correspondent pas");
                                 }
                             }
                             else
                             {
-                                rep = new ReponseSPAYMAP(ReponseSPAYMAP.FAILED, "L'utilisateur n'existe pas");
+                                rep = new ReponseCCAP(ReponseCCAP.FAILED, "L'utilisateur n'existe pas");
                                 System.out.println("Erreur - L'utilisateur n'existe pas");
                             }
                             
                             
-                        } catch (SQLException | IOException ex) {
-                            Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
-                            System.exit(0);
+                        } catch (SQLException ex) {
+                            Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     
                         try {
-                            if(rep != null && rep.getCode()== ReponseSPAYMAP.SUCCESS)
+                            if(rep != null && rep.getCode()== ReponseCCAP.SUCCESS)
                             {
                                 oos.writeObject(rep);
-                                handshake();
+                                //handshake();
                             }
                                 
 
                         } catch (IOException ex) {
-                            Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
                         }
-                    }
+                    }*/
             }
             
-            private void handshake()
+            /*private void handshake()
             {
                 try {
                     //Lecture du keystore
@@ -229,108 +201,13 @@ public class RequeteSPAYMAP implements Requete, Serializable
                     /*Il y a deux clés symétriques à envoyer, une pour chiffrer les données et l'autre pour fabriquer un HMAC
                     /énoncé : Enfin, la clé symétrique (clé secrète) utilisée par un employé pour s'authentifier 
                     (HMAC) n'est pas la même que celle qui lui permet de chiffre/déchiffrer : tout employé
-                    possède donc deux clés symétriques à usage différent.*/
+                    possède donc deux clés symétriques à usage différent.
                     
                 } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException | IOException | CertificateException | ClassNotFoundException ex) {
-                    Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
                     System.exit(0);}
                     
-            }
-            private void treatLogout() 
-            {
-                try {
-                    if(state.equals("NON_AUTHENTICATED"))
-                    {
-                        rep = new ReponseSPAYMAP(ReponseSPAYMAP.FAILED,"Vous n'êtes pas authentifié");
-                        cs.TraceEvenements("serveur#client non authentifié!#" + this.getClass());
-                        //return;
-                    }
-                    else
-                    {
-                        state = "NON_AUTHENTICATED";
-                        rep = new ReponseSPAYMAP(ReponseSPAYMAP.SUCCESS, "Déconnexion réussie!");
-                        cs.TraceEvenements("serveur#client déconnecté#" + this.getClass());
-                    }
-                    
-                    
-                    oos.writeObject(rep);
-                } catch (IOException ex) {
-                    Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            
-            private void treatListReservNonPayees() {
-                 try {
-                    //Il faut juste lister les différentes reservations possibles
-                    
-                    //Récupération des différentes reservations dans la BD
-                    ResultSet rs = BD.executeQuery("Select * from reservation WHERE boolpaye = '0'");
-                    //System.out.println("ListReserv");
-                     
-                    MessageListVector mlv = new MessageListVector();
-                    //Ca sera une linkedlist de vector pour avoir plus facile à la mettre dans la jtable
-                    while(rs.next())
-                    {
-                        Vector vecRoom = new Vector();
-                        int id = rs.getInt(1);
-                        
-                        String typeReserv = rs.getString(2);
-                        
-                        Date dateDebut = rs.getDate(3);
-                        Date dateFin = rs.getDate(4);
-                        
-                        float prixNet = rs.getFloat(5);
-                        float prixPaye = rs.getFloat("prixPaye");
-                        
-                        vecRoom.add(id);
-                        vecRoom.add(typeReserv);
-                        vecRoom.add(dateDebut);
-                        vecRoom.add(dateFin);
-                        vecRoom.add(prixNet);
-                        vecRoom.add(prixPaye);
-                        
-                        mlv.getListVector().add(vecRoom);
-                    }
-                    
-                    oos.writeObject(mlv);
-                   
-                } catch (SQLException ex) {
-                    Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IOException ex) {
-                    Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-
-            private void treatDemandePaiement() {
-                MessagePaiementClient m = (MessagePaiementClient)req.message;
-                String carteDeCredit, crypto, montantString;
-                float montant;
-                String message = new String(BouncyClass.decryptDES(cléSym, m.getTexteCrypted()));
-
-
-                //Vérification de la signature
-                boolean signatureOk = BouncyClass.verifySignature(cléPubliqueClient, m.getSignature(), message.getBytes());
-
-                if(signatureOk)
-                {
-
-                        System.out.println("Signature OK");
-                        String [] tableauString  = message.split(";");
-                        carteDeCredit = tableauString[0];
-                        crypto = tableauString[1];
-                        montantString = tableauString[2];
-
-                        montant = Float.parseFloat(montantString);
-
-                        //Vérification que la carte de crédit est valide auprès du serveur card
-
-
-                }
-                else
-                {
-                    System.out.println("Erreur - Signature pas OK");
-                }
-            }
+            }*/
             
         };
     }

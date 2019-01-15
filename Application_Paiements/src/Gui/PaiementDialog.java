@@ -9,12 +9,15 @@ import Class.ReponseSPAYMAP;
 import Class.RequeteSPAYMAP;
 import Message.MessageInt;
 import Message.MessagePaiementClient;
+import Utilities.BouncyClass;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.PrivateKey;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.SecretKey;
 import javax.swing.JOptionPane;
 
 /**
@@ -158,10 +161,11 @@ public class PaiementDialog extends javax.swing.JDialog {
                             .addComponent(jLabel6)
                             .addComponent(jLabel_sommeDejaPayee))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel3)
-                            .addComponent(jTF_montant, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel4))
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jTF_montant, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel4)))
                         .addGap(18, 18, 18)
                         .addComponent(jButton1))
                     .addGroup(layout.createSequentialGroup()
@@ -181,22 +185,52 @@ public class PaiementDialog extends javax.swing.JDialog {
             la clé secrète négociée lors du handshake et accompagnée de la signature de l'employé (le
             certificat de celui-ci, plus exactement celui de son tour-operator, est supposé disponible sur
             Serveur_Paiements).*/
-            
             MessagePaiementClient mp = new MessagePaiementClient();
-            mp.setCarteDeCreditByte(this.jTF_carteDeCredit.getText().getBytes());
-            mp.setCryptogrammeByte(this.jTF_crypto.getText().getBytes());
-            mp.setMontantByte(this.jTF_montant.getText().getBytes());
+            
+            String carteCredit = this.jTF_carteDeCredit.getText();
+            String crypto = this.jTF_crypto.getText();
+            String montant = this.jTF_montant.getText();
+            
+            
+            SecretKey key = ((ApplicationForm)this.getParent()).getCléSym();
+            
+            //On va concaténer dans un String ces données
+            String message = carteCredit + ";" + crypto + ";" + montant;
+            System.out.println("Message concaténé : "+message);
+            
+            //Récupération clé privée du client
+            PrivateKey cléPrivée = ((ApplicationForm)this.getParent()).getCléPrivée();
+            //Créer la signature de ce string
+            byte [] signature = BouncyClass.prepareSignature(cléPrivée, message.getBytes());
+            
+            //Chiffrer ce string
+            byte [] texteChiffré = BouncyClass.encryptDES(key, message.getBytes());
+            
+            //On le place dans le messagePaiementClient
+            mp.setSignature(signature);
+            mp.setTexteCrypted(texteChiffré);
             
             req = new RequeteSPAYMAP(RequeteSPAYMAP.REQUEST_PAIEMENT, mp);
             
+            
             if(oos != null)
                 oos.writeObject(req);
+            videChamps();
+            this.setVisible(false);
         } catch (IOException ex) {
             Logger.getLogger(PaiementDialog.class.getName()).log(Level.SEVERE, null, ex);
             System.exit(0);
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void videChamps()
+    {
+        this.jTF_carteDeCredit.setText("");
+        this.jTF_crypto.setText("");
+        this.jTF_montant.setText("");
+        this.jLabel_sommeDejaPayee.setText("0");
+        this.jLabel_sommeTotalAPayer.setText("0");
+    }
     /**
      * @param args the command line arguments
      */

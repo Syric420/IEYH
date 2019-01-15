@@ -15,16 +15,14 @@ public class ThreadSer extends Thread
     private ConsoleServeur guiApplication;
     private ServerSocket SSocket = null;
     private BeanBD BD; 
-    private Socket socketCard;
     
-    public ThreadSer(int p, int n, SourceTaches st, ConsoleServeur cs, BeanBD bd, Socket serveurCard)
+    public ThreadSer(int p, int n, SourceTaches st, ConsoleServeur cs, BeanBD bd)
     {
         port = p;
         nbMaxCli = n;
         tachesAExecuter = st; 
         guiApplication = cs;
         BD = bd;
-        socketCard = serveurCard;
     }
     
     public void run()
@@ -81,7 +79,7 @@ public class ThreadSer extends Thread
             {
                 System.err.println("Erreur ? [" + e.getMessage() + "]");
             }
-            Runnable travail = req.createRunnable(CSocket, guiApplication, oos, ois, BD, socketCard);
+            Runnable travail = req.createRunnable(CSocket, guiApplication, oos, ois, BD, null);
             if (travail != null)
             {
                 tachesAExecuter.recordTache(travail);
