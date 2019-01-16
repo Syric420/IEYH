@@ -4,6 +4,7 @@ import Database.facility.BeanBD;
 import Interfaces.ConsoleServeur;
 import Threads.ThreadSer;
 import Class.ListeTaches;
+import SAXParser.MySaxParser;
 import Utilities.ReadProperties;
 import java.io.*;
 import java.net.*;
@@ -15,7 +16,11 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.table.DefaultTableModel;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.xml.sax.SAXException;
 
 
 /**
@@ -24,7 +29,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
  */
 public class ServForm extends javax.swing.JFrame implements ConsoleServeur
 {
-    int port, nbMaxCli, portCard;
+    int portPay, nbMaxCli, portCard, portAdmin;
     String adresseIpCard=null;
     Socket socketCard= null;
     ServerSocket SSocket = null;
@@ -39,13 +44,13 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
     {
         initComponents();
         Security.addProvider(new BouncyCastleProvider());
-        try {
+        /*try {
             ReadProperties rp = new ReadProperties("/Utilities/config.properties");
-            port = Integer.parseInt(rp.getProp("PORT_PAY"));
+            portPay = Integer.parseInt(rp.getProp("PORT_PAY"));
             portCard = Integer.parseInt(rp.getProp("PORT_CARD"));
             nbMaxCli = Integer.parseInt(rp.getProp("NB_MAX_CLI"));
             adresseIpCard = rp.getProp("ADRESSE_IP_SERVCARD");
-            labelPort.setText(String.valueOf(port));
+            labelPort.setText(String.valueOf(portPay));
             TraceEvenements("serveur#initialisation#" + this.getClass());
             //Connexion BD
             BD = new BeanBD();
@@ -53,13 +58,56 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
             BD.connect();
             //-------------
             System.out.println("Adresse ip :"+adresseIpCard);
-            System.out.println("Port :"+port);
+            System.out.println("Port :"+portPay);
             socketCard = new Socket(adresseIpCard, portCard);
             
             
             buttonStartActionPerformed(null);
         } catch (IOException ex) {
             Logger.getLogger(ServForm.class.getName()).log(Level.SEVERE, null, ex);
+            System.exit(0);
+        }*/
+        
+        System.out.println("Création du handler");
+        MySaxParser sc = new MySaxParser("src\\SAXParser\\XMLDocument.xml");
+
+        System.out.println("Création de la factory");
+        SAXParserFactory spf = SAXParserFactory.newInstance();
+
+        try
+        {
+            System.out.println("Création du parser");
+            SAXParser sp = spf.newSAXParser();
+            System.out.println("Mise en route du parsing \n\n");
+            sp.parse(new File(sc.getNomFichierXML()), sc);
+
+            portPay = Integer.parseInt(sc.getVecConnector().elementAt(0)); //portPay à l'indice 0 de connector
+            portAdmin = Integer.parseInt(sc.getVecConnector().elementAt(1)); //portAdmin à l'indice 1 de connector
+            nbMaxCli = Integer.parseInt(sc.getVecArchitecture().elementAt(0)); //nbMaxCli à l'indice 0 d'architecture
+
+            labelPort.setText(String.valueOf(portPay));
+            //labelPortAdmin.setText(String.valueOf(portAdmin));
+            TraceEvenements("serveur#initialisation#" + this.getClass());
+
+            //Connexion BD
+            BD = new BeanBD();
+            BD.setTypeBD("mysql");
+            BD.connectXML(sc.getVecBDMysql(), sc.getVecBDOracle());
+            buttonStartActionPerformed(null);
+        }
+        catch (IOException ex)
+        {
+            System.err.println("IOException: " + ex.getMessage());
+            System.exit(0);
+        }
+        catch (ParserConfigurationException ex)
+        {
+            System.err.println("ParserConfigurationException: " + ex.getMessage());
+            System.exit(0);
+        }
+        catch (SAXException ex)
+        {
+            System.err.println("SAXException: " + ex.getMessage());
             System.exit(0);
         }
     }
@@ -140,7 +188,7 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
     private void buttonStartActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_buttonStartActionPerformed
     {//GEN-HEADEREND:event_buttonStartActionPerformed
         TraceEvenements("serveur#acquisition du port#" + this.getClass());
-        ThreadSer thrs = new ThreadSer(port, nbMaxCli, new ListeTaches(), this, BD, socketCard);
+        ThreadSer thrs = new ThreadSer(portPay, nbMaxCli, new ListeTaches(), this, BD, socketCard);
         thrs.start();
         buttonStart.setEnabled(false);
     }//GEN-LAST:event_buttonStartActionPerformed

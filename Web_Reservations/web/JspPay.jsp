@@ -17,6 +17,7 @@
         <form name="btnPayer" action="MainServlet">
             <p>Numéro de carte : <input type="text" name="inputCarteCredit" value="" required=""/></p>
             <p>Cryptogramme : <input type="text" name="inputCryptogramme" value="" required=""/></p>
+            <p>Montant : <input type="text" name="inputMontant" value="" required=""/></p>
             <p>Vous voulez payer ? <input type="submit" value="Payer" /></p>
             <input type="hidden" name="action" value="payPayer">
         </form>

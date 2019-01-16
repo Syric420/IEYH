@@ -94,7 +94,56 @@ public class RequeteCCAP implements Requete, Serializable
                 }
                 
             }
-            
+            private void chooseGoodDay()
+            {
+                try {
+                    Calendar calendar = Calendar.getInstance();
+                    java.util.Date date = calendar.getTime();
+                    calendar.setTime(date);
+                    int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+                    
+                    KeyStore ks = null;
+                    ks = KeyStore.getInstance("JCEKS");
+                    ks.load(new FileInputStream("..\\Serveur_Card\\ServeurCard.JCEKS"), "123".toCharArray());
+                    
+                    switch (dayOfWeek) {
+                        case Calendar.MONDAY:
+                            cléPrivée = (PrivateKey) ks.getKey("lundirsa", "123".toCharArray());
+                            System.out.println("Cle privee recuperee : " + cléPrivée.toString());
+                            break;
+                        case Calendar.TUESDAY:
+                            cléPrivée = (PrivateKey) ks.getKey("mardirsa", "123".toCharArray());
+                            System.out.println("Cle privee recuperee : " + cléPrivée.toString());
+                            break;
+                        case Calendar.WEDNESDAY:
+                            cléPrivée = (PrivateKey) ks.getKey("mercredirsa", "123".toCharArray());
+                            System.out.println("Cle privee recuperee : " + cléPrivée.toString());
+                            break;
+                        case Calendar.THURSDAY:
+                            cléPrivée = (PrivateKey) ks.getKey("jeudirsa", "123".toCharArray());
+                            System.out.println("Cle privee recuperee : " + cléPrivée.toString());
+                            break;
+                        case Calendar.FRIDAY:
+                            cléPrivée = (PrivateKey) ks.getKey("vendredirsa", "123".toCharArray());
+                            System.out.println("Cle privee recuperee : " + cléPrivée.toString());
+                            break;
+                        case Calendar.SATURDAY:
+                            cléPrivée = (PrivateKey) ks.getKey("samedirsa", "123".toCharArray());
+                            System.out.println("Cle privee recuperee : " + cléPrivée.toString());
+                            break;
+                        case Calendar.SUNDAY:
+                            cléPrivée = (PrivateKey) ks.getKey("dimanchersa", "123".toCharArray());
+                            System.out.println("Cle privee recuperee : " + cléPrivée.toString());
+                            break;
+                    }
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException ex) {
+                    Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (UnrecoverableKeyException ex) {
+                    Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
             private void treatVerif() 
             {
                 PreparedStatement pst = null;
@@ -106,14 +155,7 @@ public class RequeteCCAP implements Requete, Serializable
                     MessageCryptedWithSignature m = (MessageCryptedWithSignature)req.message;
                     
                     //Ce serveur a 7 paires de clefs asymétrique, une chaque jour donc il faut récupérer la clef du bon jour
-                    
-                    KeyStore ks = null;
-                    ks = KeyStore.getInstance("JCEKS");
-                    ks.load(new FileInputStream("..\\Serveur_Card\\ServeurCard.JCEKS"), "123".toCharArray());
-                    
-                    cléPrivée = (PrivateKey) ks.getKey("lundirsa", "123".toCharArray());
-                    System.out.println("Cle privee recuperee : " + cléPrivée.toString());
-                    
+                    chooseGoodDay();
                     
                     byte [] messageByte = BouncyClass.decryptRSA(cléPrivée, m.getTexteCrypted());
                     
@@ -188,7 +230,7 @@ public class RequeteCCAP implements Requete, Serializable
                     
                 } catch (FileNotFoundException ex) {
                     Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException | UnrecoverableKeyException | SQLException ex) {
+                } catch (IOException | SQLException ex) {
                     Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }

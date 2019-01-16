@@ -113,6 +113,41 @@ public class BeanBD {
         }
     }
     
+    public int connectXML(Vector<String> vecBDMysql, Vector<String> vecBDOracle)
+    {
+        Class leDriver;
+        if(getTypeBD().equals(""))
+            return -1;
+        else
+        {
+            System.out.println("Essai de connexion JDBC");
+            try
+            {
+                if(typeBD.equals("mysql"))
+                {
+                    leDriver = Class.forName(vecBDMysql.elementAt(0));
+                    setCon(DriverManager.getConnection(vecBDMysql.elementAt(1),vecBDMysql.elementAt(2),vecBDMysql.elementAt(3)));
+                    setInstruc(getCon().createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE));
+                }
+                else
+                {
+                    leDriver = Class.forName(vecBDOracle.elementAt(0));
+                    setCon(DriverManager.getConnection(vecBDOracle.elementAt(1),vecBDOracle.elementAt(2),vecBDOracle.elementAt(3)));
+                    setInstruc(getCon().createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE));
+                }
+            }
+            catch (ClassNotFoundException e)
+            { 
+                System.out.println("Driver adéquat non trouvable : " + e.getMessage()); 
+                System.exit(0);
+            } 
+            catch (SQLException ex)
+            {
+                Logger.getLogger(BeanBD.class.getName()).log(Level.SEVERE, null, ex);System.exit(0);
+            }
+            return 0;
+        }
+    }
     public ResultSet executeQuery(String req) throws SQLException
     {
         

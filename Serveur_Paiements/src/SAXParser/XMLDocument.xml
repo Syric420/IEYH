@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE ServeurPaiement SYSTEM "XMLDocument.dtd">
+
+<ServeurPaiement>
+
+    <noms_serveurs>
+        <!--nom officiel, non DNS, etc-->
+        <nom>Serveur Paiements</nom>
+        <dns>DNSServerName</dns>
+    </noms_serveurs>
+    
+    <infos_root>
+        <!--informations sur l'administration du serveur-->
+        <info1>info1</info1>
+        <info2>info2</info2>
+    </infos_root>
+    
+    <connector>
+        <!--les ports utilisés par Application_Admin selon qu'il communique en clair ou
+        avec SSL (dans ce cas, il faut aussi, notamment, le chemin des keystores)-->
+        <port_pay>5022</port_pay>
+        <port_admin>50012</port_admin>
+    </connector>
+    
+    <architecture>
+        <!--le fait d'être en pool de threads ou pas ainsi que le nombre maximum de threads
+        soit démarrés dans le pools de threads associé ou soit acceptés à la demande-->
+        <nb_max_cli>3</nb_max_cli>
+        <type>pool</type>
+    </architecture>
+    
+    <databases>
+        <!--une série de <database> avec le nom de la base, celui de son SGBD et sa version, etc-->
+        <bd DBName="oracle">
+            <driver>oracle.jdbc.driver.OracleDriver</driver>
+            <address>jdbc:oracle:thin:@192.168.81.133:1521:xe</address>
+            <user>thib</user>
+            <password>123</password>
+        </bd>
+        <bd DBName="mysql">
+            <driver>org.gjt.mm.mysql.Driver</driver>
+            <address>jdbc:mysql://192.168.246.130:3306/sys</address>
+            <user>thib</user>
+            <password>1234</password>
+        </bd>
+    </databases>
+    
+</ServeurPaiement>

@@ -310,6 +310,62 @@ public class RequeteSPAYMAP implements Requete, Serializable
                     Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
+            
+            private void chooseGoodDay()
+            {
+                try {
+                    Calendar calendar = Calendar.getInstance();
+                    java.util.Date date = calendar.getTime();
+                    calendar.setTime(date);
+                    int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+                    X509Certificate certif;
+                    KeyStore ks = null;
+                    ks = KeyStore.getInstance("JCEKS");
+                    ks.load(new FileInputStream("..\\Serveur_Card\\ServeurCard.JCEKS"), "123".toCharArray());
+                    
+                    switch (dayOfWeek) {
+                        case Calendar.MONDAY:
+                            certif = (X509Certificate)ks.getCertificate("lundirsa");
+                            cléPubliqueCard = certif.getPublicKey();
+                            System.out.println("Cle publique du certificat de ServeurCard.JCEKS recuperée = "+cléPubliqueCard.toString());
+                            break;
+                        case Calendar.TUESDAY:
+                            certif = (X509Certificate)ks.getCertificate("mardirsa");
+                            cléPubliqueCard = certif.getPublicKey();
+                            System.out.println("Cle publique du certificat de ServeurCard.JCEKS recuperée = "+cléPubliqueCard.toString());
+                            break;
+                        case Calendar.WEDNESDAY:
+                            certif = (X509Certificate)ks.getCertificate("mercredirsa");
+                            cléPubliqueCard = certif.getPublicKey();
+                            System.out.println("Cle publique du certificat de ServeurCard.JCEKS recuperée = "+cléPubliqueCard.toString());
+                            break;
+                        case Calendar.THURSDAY:
+                            certif = (X509Certificate)ks.getCertificate("jeudirsa");
+                            cléPubliqueCard = certif.getPublicKey();
+                            System.out.println("Cle publique du certificat de ServeurCard.JCEKS recuperée = "+cléPubliqueCard.toString());
+                            break;
+                        case Calendar.FRIDAY:
+                            certif = (X509Certificate)ks.getCertificate("vendredirsa");
+                            cléPubliqueCard = certif.getPublicKey();
+                            System.out.println("Cle publique du certificat de ServeurCard.JCEKS recuperée = "+cléPubliqueCard.toString());
+                            break;
+                        case Calendar.SATURDAY:
+                            certif = (X509Certificate)ks.getCertificate("samedirsa");
+                            cléPubliqueCard = certif.getPublicKey();
+                            System.out.println("Cle publique du certificat de ServeurCard.JCEKS recuperée = "+cléPubliqueCard.toString());
+                            break;
+                        case Calendar.SUNDAY:
+                            certif = (X509Certificate)ks.getCertificate("dimanchersa");
+                            cléPubliqueCard = certif.getPublicKey();
+                            System.out.println("Cle publique du certificat de ServeurCard.JCEKS recuperée = "+cléPubliqueCard.toString());
+                            break;
+                    }
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException ex) {
+                    Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
 
             private void treatDemandePaiement() {
                 MessageCryptedWithSignature m = (MessageCryptedWithSignature)req.message;
@@ -327,6 +383,8 @@ public class RequeteSPAYMAP implements Requete, Serializable
                 montant = Float.parseFloat(montantString);
                 idReservation = Integer.parseInt(stringIdReservation);
                 
+                chooseGoodDay();
+                
                 //Vérification de la signature
                 boolean signatureOk = BouncyClass.verifySignature(cléPubliqueClient, m.getSignature(), message.getBytes());
 
@@ -339,14 +397,6 @@ public class RequeteSPAYMAP implements Requete, Serializable
                         //Vérification que la carte de crédit est valide auprès du serveur card
                         //Il faut envoyer d'après l'énoncé :
                         /*le numéro de carte et la somme à débiter étant cryptés asymétriquement accompagné de la signature du Serveur_Paiements*/
-                        KeyStore ks = null;
-                        ks = KeyStore.getInstance("JCEKS");
-                        ks.load(new FileInputStream("..\\Serveur_Card\\ServeurCard.JCEKS"), "123".toCharArray());
-                        
-                        X509Certificate certif = (X509Certificate)ks.getCertificate("lundirsa");
-                        cléPubliqueCard = certif.getPublicKey();
-                        System.out.println("Cle publique du certificat de ServeurCard.JCEKS recuperée = "+cléPubliqueCard.toString());
-                        
                         
                         //Chiffrement du texte clair avec la clé publique
                         byte [] texteCrypted = BouncyClass.encryptRSA(cléPubliqueCard, message.getBytes());
@@ -431,7 +481,7 @@ public class RequeteSPAYMAP implements Requete, Serializable
                         
                     } catch (FileNotFoundException ex) {
                         Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException | ClassNotFoundException | SQLException ex) {
+                    } catch (IOException | ClassNotFoundException | SQLException ex) {
                         Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
                     }
 

@@ -8,6 +8,8 @@ package Servlet;
 import Database.facility.BeanBD;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.SecretKey;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
@@ -31,6 +34,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import Message.*;
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 /**
  *
@@ -53,21 +63,36 @@ public class MainServlet extends HttpServlet {
     Session sess;
     @Override
     public void init(ServletConfig config) throws ServletException {
-        super.init(config);
-        ServletContext sc = config.getServletContext();
         
-        BD = new BeanBD();
-        BD.setTypeBD("mysql");
-        BD.connect();
-        
-        Properties prop = System.getProperties();
-        
-        prop.put("mail.smtp.host", "u2.tech.hepl.local");
-        System.out.println("Création d'une session mail");
-        //prop.put("mail.smtp.starttls.enable", "true");
-        //prop.put("file.encoding", charset);
-        //prop.put("mail.smtp.port", "587");
-        sess = Session.getDefaultInstance(prop, null);
+            super.init(config);
+            ServletContext sc = config.getServletContext();
+            
+            BD = new BeanBD();
+            BD.setTypeBD("mysql");
+            BD.connect();
+            
+            Properties prop = System.getProperties();
+            
+            prop.put("mail.smtp.host", "u2.tech.hepl.local");
+            System.out.println("Création d'une session mail");
+            //prop.put("mail.smtp.starttls.enable", "true");
+            //prop.put("file.encoding", charset);
+            //prop.put("mail.smtp.port", "587");
+            sess = Session.getDefaultInstance(prop, null);
+            
+            /*KeyStore ks = null;
+            ks = KeyStore.getInstance("JCEKS");
+            ks.load(new FileInputStream("..\\Application_Paiements\\ApplicationPaiement.JCEKS"),
+                    "123".toCharArray());
+            
+            SecretKey key = (SecretKey) ks.getKey("paiementsym", "123".toCharArray());;
+            System.out.println("Cle privee recuperee : " + key.toString());
+            SecretKey keyHMAC = (SecretKey) ks.getKey("paiementsymhmac", "123".toCharArray());
+            PublicKey cléPubliqueServeur =  ;
+            
+        } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException | IOException | CertificateException ex) {
+            Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+        }*/
         
     }
 
@@ -281,7 +306,113 @@ public class MainServlet extends HttpServlet {
                     try {
                         HttpSession session = request.getSession(true);
                         //on regarde si l'utilisateur est bien connecté
+                        /*La fermeture de
+                        cette boîte (PaiementDialog) provoque l'envoi d'une requête de paiement: cette requête est cryptée au moyen de
+                        la clé secrète négociée lors du handshake et accompagnée de la signature de l'employé (le
+                        certificat de celui-ci, plus exactement celui de son tour-operator, est supposé disponible sur
+                        Serveur_Paiements).*/
+                        MessageCryptedWithSignature mp = new MessageCryptedWithSignature();
 
+
+                        String carteCredit = (String)request.getParameter("inputCarteCredit");
+                        String crypto = (String)request.getParameter("inputCryptogramme");
+                        String montant = (String)request.getParameter("inputMontant");
+                        float montantFloat = Float.parseFloat(montant);
+
+
+                            /*SecretKey key = ((ApplicationForm)this.getParent()).getCléSym();
+                            SecretKey keyHMAC = ((ApplicationForm)this.getParent()).getCléSymHMAC();
+                            PublicKey cléPubliqueServeur =  ((ApplicationForm)this.getParent()).getCléPubliqueServeur();
+                            //On va concaténer dans un String ces données
+                            String message = idReservation + ";" + carteCredit + ";" + crypto + ";" + montant;
+                            System.out.println("Message concaténé : "+message);
+
+                            //Récupération clé privée du client
+                            PrivateKey cléPrivée = ((ApplicationForm)this.getParent()).getCléPrivée();
+                            //Créer la signature de ce string
+                            byte [] signature = BouncyClass.prepareSignature(cléPrivée, message.getBytes());
+
+                            //Chiffrer ce string
+                            byte [] texteChiffré = BouncyClass.encryptDES(key, message.getBytes());
+
+                            //On le place dans le messagePaiementClient
+                            mp.setSignature(signature);
+                            mp.setTexteCrypted(texteChiffré);
+
+                            req = new RequeteSPAYMAP(RequeteSPAYMAP.REQUEST_PAIEMENT, mp);
+
+
+                            if(oos != null)
+                                oos.writeObject(req);
+
+                            rep = (ReponseSPAYMAP)ois.readObject();
+
+
+                            if(rep.getCode()==ReponseSPAYMAP.FAILED)
+                            {
+                                JOptionPane.showMessageDialog(this, rep.getChargeUtile(), "Erreur", JOptionPane.ERROR_MESSAGE);
+                            }
+                            else
+                            {
+                                System.out.println("Réussi");
+                                //On demande de recharger la table des réservations pour que ça soit à jour
+
+
+                                MessageCryptedWithHMAC mc = (MessageCryptedWithHMAC) rep.getMessage();
+                                //on reçoit le message crypté avec prixRestantString+";"+idTransaction+";"+userEmploye  ET le HMAC dans un autre champ à part
+                                //1ère étape : décrypter le message
+
+                                message = new String(BouncyClass.decryptDES(key, mc.getTexteCrypted()));
+
+                                System.out.println("Message qui va être vérifié avec HMAC : "+message);
+                                //2éme étape : vérifier l'intégrité avec le HMAC
+
+                                if(BouncyClass.verifyHMAC(keyHMAC, mc.getHmac(), message.getBytes()))
+                                {
+                                    //Si le HMAC est vérifié
+                                    System.out.println("HMAC vérifié");
+                                    rep = new ReponseSPAYMAP(ReponseSPAYMAP.SUCCESS, "HMAC vérifié");//On signale au serveur que le HMAC a été vérifié
+                                    if(oos != null)
+                                        oos.writeObject(rep);
+
+                                    rep = (ReponseSPAYMAP)ois.readObject(); // Il renvoie soit succès si il y a la facture avec soit failed s'il y a pas la facture
+
+                                    if(rep.getCode()==ReponseSPAYMAP.SUCCESS)
+                                    {
+                                        //Facture avec, il faut alors décrypter la facture + vérifier la signature qui l'accompagne
+                                        MessageCryptedWithSignature mCrypted = (MessageCryptedWithSignature)rep.getMessage();
+
+                                        message = new String(BouncyClass.decryptDES(key, mCrypted.getTexteCrypted()));
+
+                                        if(BouncyClass.verifySignature(cléPubliqueServeur,mCrypted.getSignature(), message.getBytes()))
+                                        {
+                                            //Si la signature est vérifiée on l'affiche
+                                            ((ApplicationForm)this.getParent()).fd.jTextArea1.setText(message);
+                                            ((ApplicationForm)this.getParent()).fd.setVisible(true);
+                                        }
+                                        else
+                                            JOptionPane.showMessageDialog(this, "Problème de signature avec la facture", "Erreur", JOptionPane.ERROR_MESSAGE);
+
+                                    }
+                                }
+                                else
+                                {
+                                    //Si le HMAC est mauvais
+                                    System.out.println("Erreur de vérification de HMAC");
+                                    //JOptionPane.showMessageDialog(this, "Erreur de vérification de HMAC", "Erreur", JOptionPane.ERROR_MESSAGE);
+                                    rep = new ReponseSPAYMAP(ReponseSPAYMAP.FAILED, "Erreur de vérification de HMAC");
+                                    if(oos != null)
+                                        oos.writeObject(rep);
+                                }
+                            }
+
+
+
+                            ((ApplicationForm)this.getParent()).chargeReservation();
+                            videChamps();
+                            this.setVisible(false);
+                        */
+                    
                         //Il faut mettre toutes les réservations sur 1 à payer pour ce client
                         pst = BD.getCon().prepareStatement("UPDATE reservation SET boolPaye = '1' WHERE idReferent = ? AND boolPaye = 0");
                         pst.setInt(1, (int)session.getAttribute("identifiant"));
@@ -327,12 +458,11 @@ public class MainServlet extends HttpServlet {
                         
                         RequestDispatcher rd = sc.getRequestDispatcher("/JspInit.jsp");
                         rd.forward(request, response);
-                    } catch (SQLException ex) {
+                    } catch (SQLException | MessagingException ex) {
                         Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (AddressException ex) {
+                    } catch (IOException ex) {
                         Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (MessagingException ex) {
-                        Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+                        System.exit(0);
                     }
                 }
                 else

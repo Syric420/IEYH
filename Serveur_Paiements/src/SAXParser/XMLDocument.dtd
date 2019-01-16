@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!--
+    An example how to use this DTD from your XML document:
+
+    <?xml version="1.0"?>
+
+    <!DOCTYPE ServeurPaiement SYSTEM "XMLDocument.dtd">
+
+    <ServeurPaiement>
+    ...
+    </ServeurPaiement>
+-->
+
+<!ELEMENT ServeurPaiement (noms_serveurs|infos_root|connector|architecture|databases)*>
+
+<!ELEMENT noms_serveurs (nom|dns)*>
+<!ELEMENT nom (#PCDATA)>
+<!ELEMENT dns (#PCDATA)>
+
+<!ELEMENT infos_root (info1|info2)*>
+<!ELEMENT info1 (#PCDATA)>
+<!ELEMENT info2 (#PCDATA)>
+
+<!ELEMENT connector (port_pay|port_admin)*>
+<!ELEMENT port_pay (#PCDATA)>
+<!ELEMENT port_admin (#PCDATA)>
+
+<!ELEMENT architecture (nb_max_cli|type)*>
+<!ELEMENT nb_max_cli (#PCDATA)>
+<!ELEMENT type (#PCDATA)>
+
+<!ELEMENT databases (bd)*>
+<!ELEMENT bd (driver|address|user|password)*>
+<!ATTLIST bd DBName CDATA #IMPLIED>
+<!ELEMENT driver (#PCDATA)>
+<!ELEMENT address (#PCDATA)>
+<!ELEMENT user (#PCDATA)>
+<!ELEMENT password (#PCDATA)>
