@@ -105,7 +105,7 @@ public class MySaxParser extends DefaultHandler
     {
         trace("-Tag-", cptTags + " " + qName + " " + tag);
         
-        if(cptTags == 1 || cptTags == 7 || cptTags == 13 || cptTags == 19 || cptTags == 25) //à chaque tag principaux - incréments de 6
+        if(cptTags == 1 || cptTags == 7 || cptTags == 13 || cptTags == 23 || cptTags == 29) //à chaque tag principaux
             tag = qName; //on stocke le tag concerné
         
         cptTags++;

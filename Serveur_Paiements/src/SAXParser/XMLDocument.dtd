@@ -1,6 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 
 <!--
+    TODO define vocabulary identification
+    PUBLIC ID: -//vendor//vocabulary//EN
+    SYSTEM ID: http://server/path/XMLDocument.dtd
+
+-->
+
+<!--
     An example how to use this DTD from your XML document:
 
     <?xml version="1.0"?>
@@ -12,28 +19,68 @@
     </ServeurPaiement>
 -->
 
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT ServeurPaiement (noms_serveurs|infos_root|connector|architecture|databases)*>
 
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT noms_serveurs (nom|dns)*>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT nom (#PCDATA)>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT dns (#PCDATA)>
 
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT infos_root (info1|info2)*>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT info1 (#PCDATA)>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT info2 (#PCDATA)>
 
-<!ELEMENT connector (port_pay|port_admin)*>
+<!--- Put your DTDDoc comment here. -->
+<!ELEMENT connector (port_pay|port_admin|port_card|adresse_ip_servcard)*>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT port_pay (#PCDATA)>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT port_admin (#PCDATA)>
 
+<!--- Put your DTDDoc comment here. -->
+<!ELEMENT port_card (#PCDATA)>
+
+<!--- Put your DTDDoc comment here. -->
+<!ELEMENT adresse_ip_servcard (#PCDATA)>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT architecture (nb_max_cli|type)*>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT nb_max_cli (#PCDATA)>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT type (#PCDATA)>
 
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT databases (bd)*>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT bd (driver|address|user|password)*>
-<!ATTLIST bd DBName CDATA #IMPLIED>
+<!ATTLIST bd
+    DBName CDATA #IMPLIED
+  >
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT driver (#PCDATA)>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT address (#PCDATA)>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT user (#PCDATA)>
+
+<!--- Put your DTDDoc comment here. -->
 <!ELEMENT password (#PCDATA)>

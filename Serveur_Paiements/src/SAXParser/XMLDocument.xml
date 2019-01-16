@@ -3,7 +3,7 @@
 <!DOCTYPE ServeurPaiement SYSTEM "XMLDocument.dtd">
 
 <ServeurPaiement>
-
+    
     <noms_serveurs>
         <!--nom officiel, non DNS, etc-->
         <nom>Serveur Paiements</nom>
@@ -21,6 +21,8 @@
         avec SSL (dans ce cas, il faut aussi, notamment, le chemin des keystores)-->
         <port_pay>5022</port_pay>
         <port_admin>50012</port_admin>
+        <port_card>5023</port_card>
+        <adresse_ip_servcard>localhost</adresse_ip_servcard>
     </connector>
     
     <architecture>

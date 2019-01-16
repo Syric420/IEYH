@@ -5,6 +5,7 @@ import Interfaces.ConsoleServeur;
 import Threads.ThreadSer;
 import Class.ListeTaches;
 import SAXParser.MySaxParser;
+import Threads.ThreadSerAdmin;
 import Utilities.ReadProperties;
 import java.io.*;
 import java.net.*;
@@ -83,16 +84,23 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
 
             portPay = Integer.parseInt(sc.getVecConnector().elementAt(0)); //portPay à l'indice 0 de connector
             portAdmin = Integer.parseInt(sc.getVecConnector().elementAt(1)); //portAdmin à l'indice 1 de connector
+            portCard = Integer.parseInt(sc.getVecConnector().elementAt(2)); //portCard à l'indice 2 de connector
+            adresseIpCard = sc.getVecConnector().elementAt(3); //adresseIpCard à l'indice 3 de connector
             nbMaxCli = Integer.parseInt(sc.getVecArchitecture().elementAt(0)); //nbMaxCli à l'indice 0 d'architecture
 
             labelPort.setText(String.valueOf(portPay));
-            //labelPortAdmin.setText(String.valueOf(portAdmin));
+            labelPortAdmin.setText(String.valueOf(portAdmin));
             TraceEvenements("serveur#initialisation#" + this.getClass());
 
             //Connexion BD
             BD = new BeanBD();
             BD.setTypeBD("mysql");
             BD.connectXML(sc.getVecBDMysql(), sc.getVecBDOracle());
+            
+            System.out.println("Adresse ip :"+adresseIpCard);
+            System.out.println("Port :"+portPay);
+            socketCard = new Socket(adresseIpCard, portCard);
+            
             buttonStartActionPerformed(null);
         }
         catch (IOException ex)
@@ -125,6 +133,9 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
         labelPort = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tableEvent = new javax.swing.JTable();
+        jLabel2 = new javax.swing.JLabel();
+        labelPortAdmin = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Serveur Paiements");
@@ -152,6 +163,13 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
         ));
         jScrollPane1.setViewportView(tableEvent);
 
+        jLabel2.setText("Port:");
+
+        labelPortAdmin.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        labelPortAdmin.setText("0");
+
+        jLabel3.setText("Port:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -165,8 +183,17 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(labelPort)
+                        .addGap(104, 104, 104)
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(labelPortAdmin)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(jLabel2)
+                    .addGap(0, 0, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -176,10 +203,17 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(labelPort))
+                    .addComponent(labelPort)
+                    .addComponent(labelPortAdmin)
+                    .addComponent(jLabel3))
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 320, Short.MAX_VALUE)
                 .addContainerGap())
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(jLabel2)
+                    .addGap(0, 0, Short.MAX_VALUE)))
         );
 
         pack();
@@ -191,6 +225,9 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
         ThreadSer thrs = new ThreadSer(portPay, nbMaxCli, new ListeTaches(), this, BD, socketCard);
         thrs.start();
         buttonStart.setEnabled(false);
+        
+        ThreadSerAdmin thrsAd = new ThreadSerAdmin(portAdmin, this, BD);
+        thrsAd.start();
     }//GEN-LAST:event_buttonStartActionPerformed
 
     /**
@@ -245,8 +282,11 @@ public class ServForm extends javax.swing.JFrame implements ConsoleServeur
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonStart;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel labelPort;
+    private javax.swing.JLabel labelPortAdmin;
     private javax.swing.JTable tableEvent;
     // End of variables declaration//GEN-END:variables
 
