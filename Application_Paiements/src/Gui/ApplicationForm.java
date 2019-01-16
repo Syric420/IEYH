@@ -29,6 +29,8 @@ public class ApplicationForm extends javax.swing.JFrame {
 
     Login login = null;
     PaiementDialog pd = null;
+    FactureDialog fd = null;
+    
     Socket socket;
     int port;
     String adresseIP;
@@ -37,6 +39,7 @@ public class ApplicationForm extends javax.swing.JFrame {
     
     private PrivateKey cléPrivée;
     private PublicKey cléPublique;
+    private PublicKey cléPubliqueServeur;
     private SecretKey cléSym;
     private SecretKey cléSymHMAC;
     RequeteSPAYMAP req = null;
@@ -61,6 +64,7 @@ public class ApplicationForm extends javax.swing.JFrame {
             
             login = new Login(this,true, socket, oos, ois);
             pd = new PaiementDialog(this, true, oos, ois);
+            fd = new FactureDialog(this, true);
             login.setVisible(true);
             
         } catch (IOException ex) {
@@ -194,6 +198,7 @@ public class ApplicationForm extends javax.swing.JFrame {
         if(jTable1.getSelectedRow()!= -1)
         {
             int ligne = jTable1.getSelectedRow();
+            pd.idReservation = jTable1.getValueAt(ligne, 0).toString();
             pd.jLabel_sommeTotalAPayer.setText(jTable1.getValueAt(ligne, 4).toString());
             pd.jLabel_sommeDejaPayee.setText(jTable1.getValueAt(ligne, 5).toString());
             pd.setVisible(true);
@@ -295,5 +300,19 @@ public class ApplicationForm extends javax.swing.JFrame {
      */
     public void setCléSymHMAC(SecretKey cléSymHMAC) {
         this.cléSymHMAC = cléSymHMAC;
+    }
+
+    /**
+     * @return the cléPubliqueServeur
+     */
+    public PublicKey getCléPubliqueServeur() {
+        return cléPubliqueServeur;
+    }
+
+    /**
+     * @param cléPubliqueServeur the cléPubliqueServeur to set
+     */
+    public void setCléPubliqueServeur(PublicKey cléPubliqueServeur) {
+        this.cléPubliqueServeur = cléPubliqueServeur;
     }
 }

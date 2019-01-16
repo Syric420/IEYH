@@ -183,8 +183,6 @@ public class RequeteCCAP implements Requete, Serializable
                     }
                     if(rep!=null)
                         oos.writeObject(rep);
-                    System.out.println("Réponse au serveur paiement bien envoyée");
-                    System.out.println(rep.getCode()+" : "+rep.getChargeUtile());
                     
                 } catch (FileNotFoundException ex) {
                     Logger.getLogger(RequeteCCAP.class.getName()).log(Level.SEVERE, null, ex);

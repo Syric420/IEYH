@@ -19,17 +19,17 @@ import org.bouncycastle.util.Arrays;
  *
  * @author Vince
  */
-public class MessagePaiementClient implements Message {
+public class MessageCryptedWithSignature implements Message {
     
     private byte[] texteCrypted;
     private byte[] signature;
 
-    public MessagePaiementClient() {
+    public MessageCryptedWithSignature() {
         this.texteCrypted = null;
         this.signature = null;
     }
 
-    public MessagePaiementClient(byte[] texteCrypted, byte[] signature) {
+    public MessageCryptedWithSignature(byte[] texteCrypted, byte[] signature) {
         this.texteCrypted = texteCrypted;
         this.signature = signature;
     }

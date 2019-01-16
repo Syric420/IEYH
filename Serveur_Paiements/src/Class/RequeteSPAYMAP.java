@@ -62,6 +62,7 @@ public class RequeteSPAYMAP implements Requete, Serializable
             private PrivateKey cléPrivée;
             private PublicKey cléPublique;
             private PublicKey cléPubliqueClient;
+            private PublicKey cléPubliqueCard;
             
             private SecretKey cléSym;
             private SecretKey cléSymHMAC;
@@ -73,6 +74,7 @@ public class RequeteSPAYMAP implements Requete, Serializable
             private ResultSet rs;
             
             private String state = "NON_AUTHENTICATED";
+            private String userEmploye = null;
             
             @Override
             public void run() 
@@ -107,10 +109,12 @@ public class RequeteSPAYMAP implements Requete, Serializable
                     {
                         Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
                         disconnected = true;
+                        userEmploye=null;
                     } 
                     catch (IOException ex) 
                     {
                         System.out.println("Client socket closed");
+                        userEmploye=null;
                         disconnected = true;
                     }
                 }
@@ -152,9 +156,11 @@ public class RequeteSPAYMAP implements Requete, Serializable
                                     state = "AUTHENTICATED";
                                     System.out.println("Les deux digests sont identique + début du handshake");
                                     
+                                    //on place les flux sur le serveur card
                                     oosCard = new ObjectOutputStream(socketCard.getOutputStream());
                                     oisCard = new ObjectInputStream(socketCard.getInputStream());
                                     
+                                    userEmploye = m.getUsername();
                                 }
                                 else
                                 {
@@ -194,7 +200,7 @@ public class RequeteSPAYMAP implements Requete, Serializable
                     //Lecture du keystore
                     KeyStore ks = null;
                     ks = KeyStore.getInstance("JCEKS");
-                    ks.load(new FileInputStream("C:\\Users\\vhoog\\Documents\\Projets ecole\\IEYH\\Serveur_Paiements\\ServeurPaiement.JCEKS"),
+                    ks.load(new FileInputStream("..\\Serveur_Paiements\\ServeurPaiement.JCEKS"),
                             "123".toCharArray());
                     cléPrivée = (PrivateKey) ks.getKey("paiementrsa", "123".toCharArray());
                     System.out.println("Cle privee recuperee : " + cléPrivée.toString());
@@ -208,6 +214,10 @@ public class RequeteSPAYMAP implements Requete, Serializable
                     //récupération de la clé publique du client
                     cléPubliqueClient = (PublicKey)ois.readObject();
                     System.out.println("Cle publique du client recuperée = "+cléPubliqueClient.toString());
+                    
+                    //envoi de la clé publique du serveur au client
+                    oos.writeObject(cléPublique);
+                    System.out.println("Cle publique du serveur envoyé au client ");
                      
                     
                     //Une fois les deux clés publiques échangées il va falloir envoyer les deux clés symétriques au client en les cryptant avec RSA
@@ -252,7 +262,7 @@ public class RequeteSPAYMAP implements Requete, Serializable
                         cs.TraceEvenements("serveur#client déconnecté#" + this.getClass());
                     }
                     
-                    
+                    userEmploye=null;
                     oos.writeObject(rep);
                 } catch (IOException ex) {
                     Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
@@ -302,33 +312,171 @@ public class RequeteSPAYMAP implements Requete, Serializable
             }
 
             private void treatDemandePaiement() {
-                MessagePaiementClient m = (MessagePaiementClient)req.message;
-                String carteDeCredit, crypto, montantString;
-                float montant;
-                String message = new String(BouncyClass.decryptDES(cléSym, m.getTexteCrypted()));
-
-
+                MessageCryptedWithSignature m = (MessageCryptedWithSignature)req.message;
+                PreparedStatement pst = null;
+                
+                String message = new String(BouncyClass.decryptDES(cléSym, m.getTexteCrypted()));//Texte déchiffré
+                String montantString, stringIdReservation, messageTransaction = null;
+                int idReservation;
+                String [] tableauString  = message.split(";");
+                float montant, prixTotalPaye=0;
+                boolean boolFacture = false;
+                
+                stringIdReservation = tableauString[0];
+                montantString = tableauString[3];
+                montant = Float.parseFloat(montantString);
+                idReservation = Integer.parseInt(stringIdReservation);
+                
                 //Vérification de la signature
                 boolean signatureOk = BouncyClass.verifySignature(cléPubliqueClient, m.getSignature(), message.getBytes());
 
                 if(signatureOk)
                 {
 
-                        System.out.println("Signature OK");
-                        String [] tableauString  = message.split(";");
-                        carteDeCredit = tableauString[0];
-                        crypto = tableauString[1];
-                        montantString = tableauString[2];
-
-                        montant = Float.parseFloat(montantString);
-
+                    try {
+                        System.out.println("Signature client OK");
+                        
                         //Vérification que la carte de crédit est valide auprès du serveur card
+                        //Il faut envoyer d'après l'énoncé :
+                        /*le numéro de carte et la somme à débiter étant cryptés asymétriquement accompagné de la signature du Serveur_Paiements*/
+                        KeyStore ks = null;
+                        ks = KeyStore.getInstance("JCEKS");
+                        ks.load(new FileInputStream("..\\Serveur_Card\\ServeurCard.JCEKS"), "123".toCharArray());
+                        
+                        X509Certificate certif = (X509Certificate)ks.getCertificate("lundirsa");
+                        cléPubliqueCard = certif.getPublicKey();
+                        System.out.println("Cle publique du certificat de ServeurCard.JCEKS recuperée = "+cléPubliqueCard.toString());
+                        
+                        
+                        //Chiffrement du texte clair avec la clé publique
+                        byte [] texteCrypted = BouncyClass.encryptRSA(cléPubliqueCard, message.getBytes());
+                        MessageCryptedWithSignature mess = new MessageCryptedWithSignature(texteCrypted, m.getSignature());//On garde la signature du serveur paiement
+                        RequeteCCAP reqCCAP = new RequeteCCAP(RequeteCCAP.REQUEST_VERIF, mess);
+                        
+                        oosCard.writeObject(reqCCAP);
+                        
+                        ReponseCCAP repCCAP = (ReponseCCAP)oisCard.readObject();
+                        
+                        
+                        if(repCCAP.getCode() == ReponseCCAP.SUCCESS)
+                        {
+                            //Si le paiement a été effectué il faut mettre à jour la BD_HOLIDAYS en mettant à jour la somme payée pour la réservation et s'il a fini de payé 
+                            pst = BD.getCon().prepareStatement("Select prixpaye, prixnet FROM reservation WHERE idReservation = ?");
+                            pst.setInt(1, idReservation);
+                            rs = pst.executeQuery();
+                            
+                            if(rs.first())
+                            {
+                                float prixnet = rs.getFloat("prixnet");
+                                float prixPaye = rs.getFloat("prixpaye");
+                                prixTotalPaye = prixPaye+montant;
+                                //S'il dépasse ou c'est égal au prix net la réservation passe en mode payée
+                                if(prixTotalPaye >= prixnet)  
+                                {
+                                    pst = BD.getCon().prepareStatement("UPDATE reservation SET prixpaye = ?, boolpaye = '1' WHERE idReservation = ?");
+                                    boolFacture = true;//On va devoir faire une facture
+                                }   
+                                else
+                                    pst = BD.getCon().prepareStatement("UPDATE reservation SET prixpaye = ? WHERE idReservation = ?");
+                                
+                                
+                                pst.setFloat(1, prixTotalPaye);
+                                pst.setInt(2, idReservation);
+                                System.out.println(pst.toString());
+                                pst.executeUpdate();
+                                
+                                //On ajoute la transaction dans une table
+                                //INSERT INTO `sys`.`transaction` (`montant`, `idReservation`) VALUES ('10', '34');
+                                pst = BD.getCon().prepareStatement("INSERT INTO transaction (montant, idReservation) VALUES (?,?)");
+                                pst.setFloat(1, montant);
+                                pst.setInt(2, idReservation);
+                                
+                                pst.executeUpdate();
+                                
+                                //On récupère le numéro de la transaction
+                                pst = BD.getCon().prepareStatement("Select idTransaction FROM transaction WHERE idReservation = ? AND montant = ?");
+                                
+                                pst.setInt(1, idReservation);
+                                pst.setFloat(2, montant);
+                                rs = pst.executeQuery();
 
+                                if(rs.last())
+                                {
+                                    float prixRestant = prixnet - prixTotalPaye;
+                                    if(prixRestant<0)//==> Ca ne peut pas arrivé normalement
+                                        prixRestant =0;
+                                    String prixRestantString = Float.toString(prixnet);
+                                
+                                    int idTransaction = rs.getInt("idTransaction");
+                                
+                                    //Le serveur envoie le prix restant et un numéro de transaction financière
+                                    //On prépare le string
+                                    messageTransaction = prixRestantString+";"+idTransaction+";"+userEmploye;
+                                    System.out.println("Message envoyé avec HMAC : "+messageTransaction);
+                                    MessageCryptedWithHMAC mc = new MessageCryptedWithHMAC(BouncyClass.encryptDES(cléSym, messageTransaction.getBytes()), BouncyClass.prepareHMAC(cléSymHMAC, messageTransaction.getBytes()));
+
+                                    rep = new ReponseSPAYMAP(ReponseSPAYMAP.SUCCESS, mc);
+                                }
+                            }
+                            else
+                            {
+                                rep = new ReponseSPAYMAP(ReponseSPAYMAP.FAILED, "Erreur - Réservation non trouvée");
+                            } 
+                        }
+                        else
+                        {
+                            rep = new ReponseSPAYMAP(ReponseSPAYMAP.FAILED, "Carte non valide");
+                        }
+                        
+                        
+                    } catch (FileNotFoundException ex) {
+                        Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException | ClassNotFoundException | SQLException ex) {
+                        Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
+                    }
 
                 }
                 else
                 {
-                    System.out.println("Erreur - Signature pas OK");
+                    rep = new ReponseSPAYMAP(ReponseSPAYMAP.FAILED, "Signature non valide");
+                }
+                try {
+                    oos.writeObject(rep);
+                    
+                    //On sait si le HMAC a été vérifié vu que le client renvoie une réponse
+                    rep = (ReponseSPAYMAP) ois.readObject();
+                    
+                    if(rep.getCode()== ReponseSPAYMAP.SUCCESS)
+                    {
+                        System.out.println("HMAC vérifié");
+                        //Si le HMAC a été vérifié du côté du client il faut regarder si le solde est payé entièrement on crée une facture finale accompagné de la signature du serveur Paiement
+                        //messageTransaction = prixRestantString+";"+idTransaction+";"+userEmploye;
+                        String [] tabString = messageTransaction.split(";");
+                        String prixRestantString = tabString[0];
+                        String idTransaction = tabString[1];
+                        
+                        
+                        if(boolFacture)
+                        {
+                            System.out.println("Création de la facture");
+                            String facture = "Identifiant de la transaction : "+idTransaction+"\nEmployé intervenant : "+userEmploye+"\nPrix Total payé : "+prixTotalPaye+"\n\nMerci de votre confiance";
+                        
+                            MessageCryptedWithSignature mCrypted = new MessageCryptedWithSignature(BouncyClass.encryptDES(cléSym, facture.getBytes()), BouncyClass.prepareSignature(cléPrivée, facture.getBytes()));
+                            
+                            rep = new ReponseSPAYMAP(ReponseSPAYMAP.SUCCESS, mCrypted);
+                        }
+                        else
+                            rep = new ReponseSPAYMAP(ReponseSPAYMAP.FAILED);
+                        
+                        oos.writeObject(rep);
+                        System.out.println("Envoi de la facture");
+                        //messageTransaction = prixRestantString+";"+idTransaction+";"+userEmploye;
+                        
+                    }
+                    
+                } catch (IOException | ClassNotFoundException ex) {
+                    Logger.getLogger(RequeteSPAYMAP.class.getName()).log(Level.SEVERE, null, ex);
+                    System.exit(0);
                 }
             }
             

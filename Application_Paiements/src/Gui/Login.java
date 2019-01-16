@@ -159,7 +159,7 @@ public class Login extends javax.swing.JDialog
         try {
             KeyStore ks = null;
             ks = KeyStore.getInstance("JCEKS");
-            ks.load(new FileInputStream("C:\\Users\\vhoog\\Documents\\Projets ecole\\IEYH\\Application_Paiements\\ApplicationPaiement.JCEKS"),
+            ks.load(new FileInputStream("..\\Application_Paiements\\ApplicationPaiement.JCEKS"),
                     "123".toCharArray());
             
             //Récupération du certificat du client + clé publique qu'il y a dedans
@@ -173,6 +173,9 @@ public class Login extends javax.swing.JDialog
             
             //Envoi de la clé publique au serveur
             oos.writeObject(((ApplicationForm)this.getParent()).getCléPublique());
+            
+            //Reception de la clé publique du serveur
+            ((ApplicationForm)this.getParent()).setCléPubliqueServeur((PublicKey)ois.readObject());
             
             //Lecture des deux clés symétriques cryptée que le serveur va envoyer au format byte []
             byte [] cléSymByteCrypted = (byte[])ois.readObject();

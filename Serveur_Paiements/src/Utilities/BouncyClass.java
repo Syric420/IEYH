@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
@@ -136,6 +137,42 @@ public class BouncyClass {
             
             
         } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException | NoSuchProviderException ex) {
+            Logger.getLogger(BouncyClass.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
+    
+    public static byte [] prepareHMAC(SecretKey cléSecrete, byte [] message)
+    {
+        byte[] ret = null;
+        try {
+            Mac hmac = Mac.getInstance("HMAC-MD5", "BC");
+            hmac.init(cléSecrete);
+            System.out.println("Hachage du message HMAC");
+            hmac.update(message);
+            System.out.println("Generation des bytes du HMAC");
+            ret = hmac.doFinal();
+            return ret;
+        } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException ex) {
+            Logger.getLogger(BouncyClass.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return ret;
+    }
+    
+     public static boolean verifyHMAC(SecretKey cléSecrete, byte [] hmac, byte [] messageAVerifier )
+    {
+        try {
+            // confection d'un HMAC local
+            Mac hlocal = Mac.getInstance("HMAC-MD5", "BC");
+            hlocal.init(cléSecrete);
+            System.out.println("Hachage du message HMAC");
+            hlocal.update(messageAVerifier);
+            System.out.println("Verification des HMACS");
+            
+            byte[] hlocalb = hlocal.doFinal();
+            
+            return MessageDigest.isEqual(hmac, hlocalb);
+        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchProviderException ex) {
             Logger.getLogger(BouncyClass.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;

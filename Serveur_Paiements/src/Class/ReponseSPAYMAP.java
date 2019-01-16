@@ -12,11 +12,18 @@ public class ReponseSPAYMAP implements Reponse, Serializable
     private int code;
     private String chargeUtile;
     private Message message;
+    private byte [] messageCrypted;
     
     public ReponseSPAYMAP(int code)
     {
         this.code = code;
         
+    }
+    
+    public ReponseSPAYMAP(int code, byte [] messageCrypt)
+    {
+        this.code = code;
+        this.messageCrypted = messageCrypt;
     }
     
     public ReponseSPAYMAP(int code, String cu)
@@ -69,5 +76,19 @@ public class ReponseSPAYMAP implements Reponse, Serializable
      */
     public void setMessage(Message message) {
         this.message = message;
+    }
+
+    /**
+     * @return the messageCrypted
+     */
+    public byte[] getMessageCrypted() {
+        return messageCrypted;
+    }
+
+    /**
+     * @param messageCrypted the messageCrypted to set
+     */
+    public void setMessageCrypted(byte[] messageCrypted) {
+        this.messageCrypted = messageCrypted;
     }
 }

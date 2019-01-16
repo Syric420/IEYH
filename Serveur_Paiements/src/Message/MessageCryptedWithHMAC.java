@@ -14,24 +14,32 @@ import java.security.PrivateKey;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bouncycastle.util.Arrays;
+/**
+ *
+ * @author Vince
+ */
+public class MessageCryptedWithHMAC implements Message {
+    /*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 
 /**
  *
  * @author Vince
  */
-public class MessagePaiementClient implements Message {
-    
     private byte[] texteCrypted;
-    private byte[] signature;
+    private byte[] hmac;
 
-    public MessagePaiementClient() {
+    public MessageCryptedWithHMAC() {
         this.texteCrypted = null;
-        this.signature = null;
+        this.hmac = null;
     }
 
-    public MessagePaiementClient(byte[] texteCrypted, byte[] signature) {
+    public MessageCryptedWithHMAC(byte[] texteCrypted, byte[] hmac) {
         this.texteCrypted = texteCrypted;
-        this.signature = signature;
+        this.hmac = hmac;
     }
 
     /**
@@ -51,15 +59,15 @@ public class MessagePaiementClient implements Message {
     /**
      * @return the signature
      */
-    public byte[] getSignature() {
-        return signature;
+    public byte[] getHmac() {
+        return hmac;
     }
 
     /**
      * @param signature the signature to set
      */
-    public void setSignature(byte[] signature) {
-        this.signature = signature;
+    public void setHmac(byte[] hmac) {
+        this.hmac = hmac;
     }
     
 }

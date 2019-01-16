@@ -7,14 +7,16 @@ package Gui;
 
 import Class.ReponseSPAYMAP;
 import Class.RequeteSPAYMAP;
+import Message.MessageCryptedWithHMAC;
 import Message.MessageInt;
-import Message.MessagePaiementClient;
+import Message.MessageCryptedWithSignature;
 import Utilities.BouncyClass;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.crypto.SecretKey;
@@ -30,7 +32,7 @@ public class PaiementDialog extends javax.swing.JDialog {
     private ObjectInputStream ois;
     private RequeteSPAYMAP req;
     private ReponseSPAYMAP rep;
-    int idReservation;
+    String idReservation;
     /**
      * Creates new form PaiementForm
      */
@@ -185,42 +187,117 @@ public class PaiementDialog extends javax.swing.JDialog {
             la clé secrète négociée lors du handshake et accompagnée de la signature de l'employé (le
             certificat de celui-ci, plus exactement celui de son tour-operator, est supposé disponible sur
             Serveur_Paiements).*/
-            MessagePaiementClient mp = new MessagePaiementClient();
+            MessageCryptedWithSignature mp = new MessageCryptedWithSignature();
+            
             
             String carteCredit = this.jTF_carteDeCredit.getText();
             String crypto = this.jTF_crypto.getText();
             String montant = this.jTF_montant.getText();
+            float montantFloat = Float.parseFloat(montant);
+            float sommeTotalAPayer = Float.parseFloat(jLabel_sommeTotalAPayer.getText());
+            if(montantFloat>sommeTotalAPayer)
+                JOptionPane.showMessageDialog(this, "Attention vous ne pouvez pas payer plus que ce qu'il ne faut");
+            else
+            {
             
             
-            SecretKey key = ((ApplicationForm)this.getParent()).getCléSym();
-            
-            //On va concaténer dans un String ces données
-            String message = carteCredit + ";" + crypto + ";" + montant;
-            System.out.println("Message concaténé : "+message);
-            
-            //Récupération clé privée du client
-            PrivateKey cléPrivée = ((ApplicationForm)this.getParent()).getCléPrivée();
-            //Créer la signature de ce string
-            byte [] signature = BouncyClass.prepareSignature(cléPrivée, message.getBytes());
-            
-            //Chiffrer ce string
-            byte [] texteChiffré = BouncyClass.encryptDES(key, message.getBytes());
-            
-            //On le place dans le messagePaiementClient
-            mp.setSignature(signature);
-            mp.setTexteCrypted(texteChiffré);
-            
-            req = new RequeteSPAYMAP(RequeteSPAYMAP.REQUEST_PAIEMENT, mp);
-            
-            
-            if(oos != null)
-                oos.writeObject(req);
-            videChamps();
-            this.setVisible(false);
-        } catch (IOException ex) {
+                SecretKey key = ((ApplicationForm)this.getParent()).getCléSym();
+                SecretKey keyHMAC = ((ApplicationForm)this.getParent()).getCléSymHMAC();
+                PublicKey cléPubliqueServeur =  ((ApplicationForm)this.getParent()).getCléPubliqueServeur();
+                //On va concaténer dans un String ces données
+                String message = idReservation + ";" + carteCredit + ";" + crypto + ";" + montant;
+                System.out.println("Message concaténé : "+message);
+
+                //Récupération clé privée du client
+                PrivateKey cléPrivée = ((ApplicationForm)this.getParent()).getCléPrivée();
+                //Créer la signature de ce string
+                byte [] signature = BouncyClass.prepareSignature(cléPrivée, message.getBytes());
+
+                //Chiffrer ce string
+                byte [] texteChiffré = BouncyClass.encryptDES(key, message.getBytes());
+
+                //On le place dans le messagePaiementClient
+                mp.setSignature(signature);
+                mp.setTexteCrypted(texteChiffré);
+
+                req = new RequeteSPAYMAP(RequeteSPAYMAP.REQUEST_PAIEMENT, mp);
+
+
+                if(oos != null)
+                    oos.writeObject(req);
+
+                rep = (ReponseSPAYMAP)ois.readObject();
+
+                
+                if(rep.getCode()==ReponseSPAYMAP.FAILED)
+                {
+                    JOptionPane.showMessageDialog(this, rep.getChargeUtile(), "Erreur", JOptionPane.ERROR_MESSAGE);
+                }
+                else
+                {
+                    System.out.println("Réussi");
+                    //On demande de recharger la table des réservations pour que ça soit à jour
+                    
+                    
+                    MessageCryptedWithHMAC mc = (MessageCryptedWithHMAC) rep.getMessage();
+                    //on reçoit le message crypté avec prixRestantString+";"+idTransaction+";"+userEmploye  ET le HMAC dans un autre champ à part
+                    //1ère étape : décrypter le message
+                    
+                    message = new String(BouncyClass.decryptDES(key, mc.getTexteCrypted()));
+                    
+                    System.out.println("Message qui va être vérifié avec HMAC : "+message);
+                    //2éme étape : vérifier l'intégrité avec le HMAC
+                    
+                    if(BouncyClass.verifyHMAC(keyHMAC, mc.getHmac(), message.getBytes()))
+                    {
+                        //Si le HMAC est vérifié
+                        System.out.println("HMAC vérifié");
+                        rep = new ReponseSPAYMAP(ReponseSPAYMAP.SUCCESS, "HMAC vérifié");//On signale au serveur que le HMAC a été vérifié
+                        if(oos != null)
+                            oos.writeObject(rep);
+                        
+                        rep = (ReponseSPAYMAP)ois.readObject(); // Il renvoie soit succès si il y a la facture avec soit failed s'il y a pas la facture
+                        
+                        if(rep.getCode()==ReponseSPAYMAP.SUCCESS)
+                        {
+                            //Facture avec, il faut alors décrypter la facture + vérifier la signature qui l'accompagne
+                            MessageCryptedWithSignature mCrypted = (MessageCryptedWithSignature)rep.getMessage();
+                            
+                            message = new String(BouncyClass.decryptDES(key, mCrypted.getTexteCrypted()));
+                            
+                            if(BouncyClass.verifySignature(cléPubliqueServeur,mCrypted.getSignature(), message.getBytes()))
+                            {
+                                //Si la signature est vérifiée on l'affiche
+                                ((ApplicationForm)this.getParent()).fd.jTextArea1.setText(message);
+                                ((ApplicationForm)this.getParent()).fd.setVisible(true);
+                            }
+                            else
+                                JOptionPane.showMessageDialog(this, "Problème de signature avec la facture", "Erreur", JOptionPane.ERROR_MESSAGE);
+                            
+                        }
+                    }
+                    else
+                    {
+                        //Si le HMAC est mauvais
+                        System.out.println("Erreur de vérification de HMAC");
+                        //JOptionPane.showMessageDialog(this, "Erreur de vérification de HMAC", "Erreur", JOptionPane.ERROR_MESSAGE);
+                        rep = new ReponseSPAYMAP(ReponseSPAYMAP.FAILED, "Erreur de vérification de HMAC");
+                        if(oos != null)
+                            oos.writeObject(rep);
+                    }
+                }
+
+
+
+                ((ApplicationForm)this.getParent()).chargeReservation();
+                videChamps();
+                this.setVisible(false);
+            }
+        } catch (IOException | ClassNotFoundException ex) {
             Logger.getLogger(PaiementDialog.class.getName()).log(Level.SEVERE, null, ex);
             System.exit(0);
         }
+        
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void videChamps()
@@ -230,6 +307,7 @@ public class PaiementDialog extends javax.swing.JDialog {
         this.jTF_montant.setText("");
         this.jLabel_sommeDejaPayee.setText("0");
         this.jLabel_sommeTotalAPayer.setText("0");
+        this.idReservation = null;
     }
     /**
      * @param args the command line arguments
